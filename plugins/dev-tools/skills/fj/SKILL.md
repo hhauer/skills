@@ -104,9 +104,9 @@ fj issue close 7 -w "reason"                                   # -w/--with-msg, 
 
 # Labels — repo-level defs under `fj repo labels [REPO] <subcommand>` (NOT `fj label`)
 fj repo labels owner/name view                                 # list existing labels
-fj repo labels owner/name create state/draft a3b18a -e         # NAME then COLOR (hex); -e = exclusive
-fj repo labels owner/name edit state/draft -c a3b18a -e true   # edit by name/ID; on EDIT -e takes true|false
-fj repo labels owner/name delete state/draft                   # by name or ID
+fj repo labels owner/name create state/approved a3b18a -e      # NAME then COLOR (hex); -e = exclusive
+fj repo labels owner/name edit state/approved -c a3b18a -e true # edit by name/ID; on EDIT -e takes true|false
+fj repo labels owner/name delete state/approved               # by name or ID
 #   -d/--description with NO argument opens $EDITOR — omit it or pass a value.
 #   -e is a BARE flag on create but true|false on edit. Exclusivity is per namespace —
 #   the `scope` in a `scope/value` name (`scope:value` is NOT treated as a namespace).
