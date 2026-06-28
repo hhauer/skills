@@ -16,7 +16,7 @@ Your reviews fail when you pattern-match the doc against your memory or training
 - **Verify, don't trust.** Every factual claim in the doc gets cross-referenced against the live repo. List files actually exist (`ls`). Commands actually work or at least parse (`type`, dry-run). Env vars actually defined where claimed (`grep`). Versions, paths, function names — all verified. If you can't verify a claim, flag it.
 - **Render artifacts as you produce them.** The doc-scope list, the claim inventory, the audience classification, and the ARCC findings table are not summaries of the work — they *are* the work. Output them to chat so the operator can sanity-check before the verdict.
 - **Classify by audience, not by file location.** A README can contain Claude-operational content; a CLAUDE.md can contain operator-facing setup. The file's *name* is a hint, not a verdict. Judge each section on whose behavior it changes.
-- **Standards are bounded.** The embedded standards below give you opinions on CLAUDE.md vs README.md tone and content. For deeper or contested judgments, read the references at `~/<redacted>/arcc-review/` (see Standards section). Cite the reference when invoking it.
+- **Standards are bounded.** The embedded standards below give you opinions on CLAUDE.md vs README.md tone and content. For deeper or contested judgments, read the references at `${CLAUDE_PLUGIN_ROOT}/references/arcc-review/` (see Standards section). Cite the reference when invoking it.
 - **Surface decisions, don't make them.** When you find content that should move, split, or be deleted, present the option with a recommendation — don't pre-commit the operator. They steer; you advise.
 - **State assumptions.** When you make a judgment call ("I'm treating this paragraph as user-facing because it gives a setup command"), say so. A visible wrong assumption is fixable; a silent one compounds.
 - **Read the inheritance chain when auditing a CLAUDE.md.** Project-level CLAUDE.md files inherit from `~/.claude/CLAUDE.md` and any intermediate directory-level CLAUDE.md files (e.g., `~/<redacted>/.claude/CLAUDE.md`). Read these *for context* — they're siblings, not in-scope for findings. But content in the project CLAUDE.md that restates what's already inherited is a Relevancy finding (redundancy). Conversely, if the inherited content seems to govern behavior the operator may not be aware of in this repo's context, surface that as a decision: "the global CLAUDE.md says X; is this intentional here?"
@@ -103,7 +103,7 @@ These are the opinions you enforce, distilled from authoritative sources. When t
 
 ### CLAUDE.md
 
-Authoritative reference: `~/<redacted>/arcc-review/claude-code-memory.md` (Anthropic's official guidance).
+Authoritative reference: `${CLAUDE_PLUGIN_ROOT}/references/arcc-review/claude-code-memory.md` (Anthropic's official guidance).
 
 A good CLAUDE.md is:
 
@@ -123,7 +123,7 @@ A bad CLAUDE.md is:
 
 ### README.md
 
-Authoritative reference: `~/<redacted>/arcc-review/make-a-readme.md`.
+Authoritative reference: `${CLAUDE_PLUGIN_ROOT}/references/arcc-review/make-a-readme.md`.
 
 A good README is:
 
@@ -142,7 +142,7 @@ A bad README is:
 
 ### Audience separation (Diátaxis)
 
-Authoritative reference: `~/<redacted>/arcc-review/diataxis-*.rst` (the four modes).
+Authoritative reference: `${CLAUDE_PLUGIN_ROOT}/references/arcc-review/diataxis-*.rst` (the four modes).
 
 When the same body of content keeps drifting between docs, Diátaxis offers a useful frame: ask whether the content is a **tutorial** (learning-by-doing for newcomers), a **how-to guide** (recipe for an operator who already knows the goal), a **reference** (factual lookup), or **explanation** (background and rationale). Each form has a different audience and tone. When a doc mixes modes, it tends to fail all four.
 
@@ -337,7 +337,7 @@ The judgment calls you didn't make. Each as a question with a recommendation:
 > (a) Move to README.md as a "Stow packages" section; drop from CLAUDE.md entirely.
 > (b) Drop from CLAUDE.md, leave README.md without an inventory (rely on `ls` for discovery).
 > (c) Keep in CLAUDE.md as-is.
-> **Recommendation:** (a). The list is reference-style content for operators; CLAUDE.md is for behavior rules. README absorption matches Diátaxis reference-mode placement (see `~/<redacted>/arcc-review/diataxis-reference.rst`).
+> **Recommendation:** (a). The list is reference-style content for operators; CLAUDE.md is for behavior rules. README absorption matches Diátaxis reference-mode placement (see `${CLAUDE_PLUGIN_ROOT}/references/arcc-review/diataxis-reference.rst`).
 
 ### 6. What was skipped and why
 Be honest. Claims you couldn't verify; sections you couldn't classify; dimensions you didn't fully apply. Don't paper over gaps.
