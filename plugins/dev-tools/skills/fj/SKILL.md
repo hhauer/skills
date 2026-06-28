@@ -1,0 +1,125 @@
+---
+name: fj
+description: Use when interacting with Forgejo repositories via CLI — creating PRs, managing issues, releases, or CI status — or any time you'd reach for `gh` but the repo's remote is Forgejo (the default host) rather than GitHub.
+---
+
+# fj (Forgejo CLI)
+
+`fj` is the CLI for Forgejo/Gitea instances. It is shaped like `gh`: same
+verbs (`pr`, `issue`, `release`, `repo`, `actions`), same instincts mostly
+transfer. It is self-documenting — `fj <command> --help` and
+`fj <command> <subcommand> --help` give accurate, complete usage. Reach for
+`--help` for anything not listed here.
+
+This skill is **only** the delta: the places where `gh` muscle memory
+produces a wrong `fj` command, or where the answer costs an agent a failed
+round trip to discover. Verified against `fj v0.5.0`.
+
+## Where `gh` instinct misleads you
+
+- **Repo targeting is split, and `-R` is not what `gh` means by `-R`.**
+  - `-R`/`--remote` = a **local git remote name** (e.g. `origin`), not `owner/repo`.
+  - `-r`/`--repo` = the repo spec (e.g. `owner/name`).
+  Using `gh`'s `-R owner/repo` habit on `fj` targets the wrong thing.
+  And the flags are **per-subcommand, not uniform**: `issue search`/`pr
+  search` take `-r owner/repo`, but `fj issue view <ID>` accepts **only**
+  `--remote <localname>` plus the positional ID — passing `-r` or `--repo`
+  there errors (`unexpected argument`). Relying on the cwd's default remote
+  works only when its host matches the API host; otherwise it errors
+  `can't figure out what repo to access` — put the repo in the ID itself as
+  `{owner}/{repo}#N` (e.g. `fj issue view owner/name#42`). Same form applies
+  to `pr view`.
+- **There is no `fj issue list` / `fj pr list`.** `gh`'s `list` verb is
+  `search` here: `fj issue search -s all`, `fj pr search -s all`
+  (`-s`: open (default) | closed | all). `search` with no query lists
+  everything. `issue list` fails with `unrecognized subcommand 'list'`.
+  **`search` output shows NO state** — just `#N: title (by author)`,
+  identical for open and closed. So `-s all` cannot tell you which are
+  closed (unlike `gh issue list`'s state column). To know state, run
+  `-s open` / `-s closed` separately, or `fj issue view <N>` (which does
+  print `Open`/`Closed`).
+- **`-H`/`--host` is a GLOBAL flag — it goes before the subcommand.**
+  `fj -H host.example issue create ...`, not `fj issue create ... -H host`.
+  Placed after the subcommand it fails with `unexpected argument '-H'`.
+  Needed whenever the remote is SSH on a non-standard port (the HTTPS API
+  host can't be inferred). Same rule for any global flag.
+- **`fj repo labels` targets a repo by positional `[REPO]`, not `-r`/`-R`.**
+  The shape is `fj repo labels [REPO] <subcommand>` (e.g.
+  `fj repo labels owner/name view`); it accepts neither `-r` nor `-R`
+  (unlike `issue`/`pr`). Omit the positional only when the cwd's git remote
+  resolves to `owner/name` — when the remote's SSH host differs from the API
+  host, `fj` can't infer it and errors `couldn't get repo name, please
+  specify`, so pass `[REPO]` explicitly. `-H` still works (global, before
+  the subcommand).
+- **Title is positional, not a flag.** `fj pr create "Title" ...` — there is
+  no `--title`.
+- **No `--draft`.** Mark a draft PR by prefixing the title: `"WIP: Title"`.
+- **`view`/`edit` use a subcommand noun, not flags.**
+  `fj pr view 42 diff`, `fj pr view 42 files`, `fj pr view 42 body`,
+  `fj issue edit 7 title "New"`, `fj issue edit 7 labels -a foo -r bar`
+  (`-r`/`--rm` removes; gh's word is `--remove`).
+- **There is no `fj label` command.** Label *definitions* live under
+  `fj repo labels` (`view`/`create`/`edit`/`delete`). `fj issue edit <n>
+  labels -a <name>` only *attaches* an existing label to an issue — it does
+  not create the definition, and fails if the label doesn't exist. And
+  `issue create` has **no `--label` flag**: create the issue, then attach
+  with `issue edit <n> labels -a <name>`.
+- **Label `create` is not idempotent — use edit-or-create.**
+  `fj repo labels [REPO] create <name> …` does **not** fail or upsert on a
+  duplicate name; it silently creates a *second* label with that name.
+  `edit <name>` instead fails cleanly (exit 1, `No label found with the
+  given name`) when the label is absent and never creates it. To assert a
+  label idempotently: try `edit` first, and `create` only when stderr
+  contains `No label found` — never on any other error, or a
+  transient/permission failure spawns a duplicate. The `fj-project` script
+  enforces the canonical label set this way.
+- **Omitting a body opens `$EDITOR` and blocks the agent.** Always pass a
+  body explicitly on anything that takes one:
+  - `pr create` / `issue create`: `--body` / `--body-file` (the title is
+    the positional arg; the body is **not** positional here)
+  - `pr comment` / `issue comment`: body is the **positional** arg (no
+    `--body` flag — passing `--body` errors) or `--body-file`
+  - `pr close` / `issue close`: `-w`/`--with-msg "reason"` — and note `-w`
+    with **no argument** also opens the editor.
+- **Version is `fj version`,** not `fj --version`.
+
+## Commands that are gh-divergent enough to spell out
+
+```bash
+# PRs
+fj pr create "Title" --base main --head feature --body "..."   # --base AND --head
+fj pr create -A --base main                                    # -A/--autofill from commits
+fj pr status 42 --wait                                         # block until checks finish
+fj pr merge 42 -M squash -d                                    # -M method, -d deletes branch
+#   -M methods: merge | rebase | rebase-merge | squash | manual
+fj pr search -s all                                            # -s: open (default) | closed | all
+fj pr view 42 body|diff|files|commits|comments|labels          # subcommand, not a flag
+
+# Issues
+fj issue edit 7 labels -a added -r removed                     # -a add, -r/--rm remove
+#   ^ succeeds SILENTLY (no output). Don't assume failure; verify with `issue view`.
+fj issue view 7                                                # labels shown in plain view —
+#   issue view has NO `labels` subcommand (that's pr-only); `issue view 7 labels` errors
+fj issue close 7 -w "reason"                                   # -w/--with-msg, inline arg required
+
+# Labels — repo-level defs under `fj repo labels [REPO] <subcommand>` (NOT `fj label`)
+fj repo labels owner/name view                                 # list existing labels
+fj repo labels owner/name create state/draft a3b18a -e         # NAME then COLOR (hex); -e = exclusive
+fj repo labels owner/name edit state/draft -c a3b18a -e true   # edit by name/ID; on EDIT -e takes true|false
+fj repo labels owner/name delete state/draft                   # by name or ID
+#   -d/--description with NO argument opens $EDITOR — omit it or pass a value.
+#   -e is a BARE flag on create but true|false on edit. Exclusivity is per namespace —
+#   the `scope` in a `scope/value` name (`scope:value` is NOT treated as a namespace).
+
+# Org-level labels (one shared set across all the org's repos; user repos have no equivalent)
+fj org label list|add|edit|rm                                  # define labels once on an organization
+
+# Auth / identity
+fj whoami            # current signed-in identity for the active instance
+fj auth list         # all instances you're logged into
+fj auth login        # opens browser (interactive — not agent-runnable)
+```
+
+Everything else (`release`, `tag`, `repo`, `actions`, `wiki`, plain
+`view`/`search`/`comment`) behaves close enough to `gh` that
+`fj <command> --help` is faster than prose here.
