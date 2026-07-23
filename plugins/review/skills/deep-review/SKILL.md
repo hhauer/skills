@@ -80,7 +80,7 @@ Look for:
 - orchestrator/message loop
 - model/provider registration
 - handler registration
-- background execution paths like rituals, workings, or subagents
+- background execution paths (scheduled jobs, workers, queues, subagents)
 - persistence and logging surfaces
 
 Do not assume a subsystem is operational just because the primitives exist.
@@ -97,18 +97,18 @@ Review at least these areas:
 
 Use parallel tool calls where possible.
 
-### 4. Use Oracle Extensively
+### 4. Run Targeted Deep Passes
 
-For a true deep review, consult the oracle multiple times with targeted questions instead of one vague request.
+For a true deep review, dispatch focused subagents (Agent tool) with targeted questions instead of one vague request.
 
-Recommended oracle passes:
+Recommended passes:
 
-1. Runtime completeness and orchestrator wiring
+1. Runtime completeness and orchestrator/entrypoint wiring
 2. Security posture and boundary enforcement
-3. Execution model correctness for charge, retries, cancellation, and delegation
+3. Execution-model correctness — retries, cancellation, concurrency, delegation
 4. Test-suite realism if the repository has an unusually strong or unusually weak test story
 
-Give the oracle specific files and a sharply scoped question each time.
+Give each subagent the specific files to read and a sharply scoped question. Run independent passes in parallel.
 
 ### 5. Verify Operational Claims
 
