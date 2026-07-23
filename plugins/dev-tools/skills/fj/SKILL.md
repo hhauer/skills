@@ -41,8 +41,11 @@ round trip to discover. Verified against `fj v0.5.0`.
 - **`-H`/`--host` is a GLOBAL flag — it goes before the subcommand.**
   `fj -H host.example issue create ...`, not `fj issue create ... -H host`.
   Placed after the subcommand it fails with `unexpected argument '-H'`.
-  Needed whenever the remote is SSH on a non-standard port (the HTTPS API
-  host can't be inferred). Same rule for any global flag.
+  Needed only when `fj` can't resolve the API host — it errors
+  `can't figure out what repo to access`. A remote whose host matches an
+  instance you're logged into (`fj auth list`) resolves fine, including SSH
+  on a non-standard port; reach for `-H` when the host is outside your
+  authenticated instances. Same placement rule for any global flag.
 - **`fj repo labels` targets a repo by positional `[REPO]`, not `-r`/`-R`.**
   The shape is `fj repo labels [REPO] <subcommand>` (e.g.
   `fj repo labels owner/name view`); it accepts neither `-r` nor `-R`
