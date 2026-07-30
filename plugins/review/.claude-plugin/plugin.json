@@ -1,7 +1,7 @@
 {
   "name": "review",
   "description": "Code and documentation review: deep-review skill plus the arcc-review, refactor-audit, and adversarial-review agents.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": {
     "name": "Harley Hauer"
   }
