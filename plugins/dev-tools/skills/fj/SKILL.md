@@ -84,6 +84,16 @@ round trip to discover. Verified against `fj v0.5.0`.
     `--body` flag — passing `--body` errors) or `--body-file`
   - `pr close` / `issue close`: `-w`/`--with-msg "reason"` — and note `-w`
     with **no argument** also opens the editor.
+- **fj output is not parser-safe.** Every interpolated field (usernames,
+  titles, hosts, issue numbers) is wrapped in invisible Unicode directional
+  isolates (U+2066–U+2069) in **all** fj output, and `--style minimal` does
+  not strip them — a sed/grep parser matching `<user>@<host>` silently
+  captures the isolates along with the value. Strip them before parsing:
+  `perl -CS -pe 's/[\x{2066}-\x{2069}]//g'`. Wording is also gh-divergent
+  where you'd parse it: `fj whoami` prints `currently signed into
+  <user>@<host>` — "into", one word, not gh's "signed in to" — and `whoami`
+  has no machine-readable output flag. (This pair of quirks silently broke
+  the `fj-project` owner-detection parser.)
 - **Version is `fj version`,** not `fj --version`.
 
 ## Commands that are gh-divergent enough to spell out
