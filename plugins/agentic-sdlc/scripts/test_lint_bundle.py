@@ -35,7 +35,6 @@ generated: { by: claude-code/test-model, at: 2026-08-09T10:00:00Z }
 ## Destination
 
 A working test project.
-No code ships from the bundle.
 
 ## Notes
 
@@ -253,23 +252,7 @@ class TestMaps(FixtureBase):
         self.write("index.md", VALID_INDEX)
         self.assertIn("missing-root-map", self.rules(self.errors(lint(self.bundle))))
 
-    def test_root_destination_missing_invariant_is_error(self) -> None:
-        self.write("index.md", VALID_INDEX)
-        self.write("map.md", """\
-            ---
-            type: Map
-            generated: { by: claude-code/test-model, at: 2026-08-09T10:00:00Z }
-            ---
-
-            # P
-
-            ## Destination
-
-            A shipped thing.
-            """)
-        self.assertIn("bad-destination", self.rules(self.errors(lint(self.bundle))))
-
-    def test_child_destination_needs_no_invariant(self) -> None:
+    def test_map_with_destination_only_is_valid(self) -> None:
         self.write_valid_root()
         self.write("billing/map.md", """\
             ---
@@ -297,7 +280,7 @@ class TestMaps(FixtureBase):
 
             ## Notes
 
-            No code ships from the bundle.
+            Operator actor id: human:tester
             """)
         self.assertIn("missing-destination", self.rules(self.errors(lint(self.bundle))))
 

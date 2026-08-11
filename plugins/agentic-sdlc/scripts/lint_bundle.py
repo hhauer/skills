@@ -8,8 +8,8 @@ and /agentic-sdlc:wayfinding-deepen sessions catch format drift before committin
 Checked invariants:
   - Every concept (non-reserved .md) carries parseable frontmatter with a known
     `type` (Map, Decision, Research, Prototype, Task).
-  - The bundle root has index.md pinning okf_version "0.2" and a map.md whose
-    Destination ends with the no-code invariant.
+  - The bundle root has index.md pinning okf_version "0.2" and a map.md; every
+    map has a non-empty Destination.
   - Maps use only the skeleton sections, omit empty sections, keep Regions and
     Frontier entries as bare links, and annotate Blocked / Decisions-so-far
     entries; state-section links must resolve.
@@ -39,7 +39,6 @@ MAP_SECTIONS = {
 BARE_LINK_SECTIONS = {"Regions", "Frontier"}
 ANNOTATED_LINK_SECTIONS = {"Blocked", "Decisions so far"}
 STATE_SECTIONS = BARE_LINK_SECTIONS | ANNOTATED_LINK_SECTIONS
-ROOT_INVARIANT = "No code ships from the bundle."
 
 KEY_RE = re.compile(r"^([A-Za-z0-9_-]+):\s*(.*)$")
 SECTION_RE = re.compile(r"^##\s+(.+?)\s*$")
@@ -375,11 +374,6 @@ class BundleLinter:
         destination = sections.get("Destination")
         if destination is None or not section_text(destination):
             self.error(path, 1, "missing-destination", "every map has a `## Destination`.")
-        elif path.parent == self.bundle:
-            last_line = section_text(destination).splitlines()[-1].strip()
-            if last_line != ROOT_INVARIANT:
-                self.error(path, destination.line, "bad-destination",
-                           f"the root Destination must end with the line {ROOT_INVARIANT!r}.")
 
         for name in BARE_LINK_SECTIONS & sections.keys():
             section = sections[name]
