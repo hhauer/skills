@@ -6,9 +6,9 @@ Shared contract for `/agentic-sdlc:wayfinding-widen` and `/agentic-sdlc:wayfindi
 
 One project, one design bundle, permanent. On disk it is OKF: every file is a **concept** — YAML frontmatter, then a markdown body. The root is `design/map.md`, a map like any other, beside a static `design/index.md` that pins the format version. The tree is organized by **subject, not by when the work happened**: in two years nobody cares which month the disciplines were worked through; they care where discipline design lives. A level exists only when the level above it grew too wide to read — depth is discovered, never scaffolded in advance.
 
-The root map's Destination is the project's north star, and it always ends: *No code ships from the bundle.* That invariant is project-wide; every other map's Destination says only what resolved looks like for its own subject.
+The root map's Destination is the project's north star; every other map's Destination says only what resolved looks like for its own subject. *No code ships from the bundle* is a project-wide invariant, but it is doctrine — this contract, which every session reads — not map content: a Destination describes the project, and writing process rules into it pollutes the north star with machinery.
 
-Sessions land through version control like all other work: each session runs on an ordinary working branch cut from main and ends with a pull request the operator merges. If the previous session's PR is still open, continue on that branch rather than stacking a second. The bundle on main is the readable truth; no session touches main directly.
+Sessions land through version control like all other work: each session runs on an ordinary working branch cut from main — or continues the previous session's branch if it hasn't merged yet, rather than stacking a second. At session close, ask the operator to land the branch; **their typed yes in conversation is the approval** (per the version-control rules — a selection in a tool prompt doesn't count), and on it the session fast-forward merges to main (rebasing onto main first if it has moved), pushes, and deletes the branch. If the operator defers, push the branch and stop — it waits unmerged for the next session; a pull request is cut only if the operator asks for one, e.g. to read a founding widen's whole bundle cold before it becomes truth. The bundle on main is the readable truth, so land promptly — but main moves only on that typed approval.
 
 ### The OKF substrate
 
@@ -62,8 +62,7 @@ generated: { by: claude-code/<model>, at: 2026-08-09T18:00:00Z }
 
 ## Destination
 
-<What resolved looks like for this subject. At the root only, always ending:>
-No code ships from the bundle.
+<What resolved looks like for this subject; at the root, the project's north star.>
 
 ## Notes
 
@@ -193,7 +192,7 @@ Resolving a waypoint changes the map around it. Every resolution, in order:
 4. Newly surfaced sharp questions become waypoints, wired into Frontier or Blocked.
 5. New research waypoints get `agentic-sdlc:waypoint-researcher` dispatched before the session ends.
 6. **Check for quiet.** Walk up from the resolved waypoint's map toward the root; if the sweep left any subtree quiet, propose the commitment conversation for the highest quiet node (see below).
-7. Run the lint, fix what it finds, commit, push, and make sure the session's pull request exists.
+7. Run the lint, fix what it finds, commit, and land the branch per the version-control contract above.
 
 The sweep is not optional housekeeping — an unswept map lies about what's takeable, and the next session inherits the lie.
 

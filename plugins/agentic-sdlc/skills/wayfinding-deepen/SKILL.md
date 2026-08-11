@@ -11,7 +11,7 @@ Deepen the bundle: resolve the focus waypoint with the operator, keep the maps h
 
 ## Flow
 
-1. **Cut a working branch from main** — or continue the previous session's branch if its PR is still open, rather than stacking a second. Load the maps on the path from the root to the focus region — the low-resolution view. Zoom into individual waypoints on demand during conversation; don't front-load them.
+1. **Cut a working branch from main** — or continue the previous session's branch if it hasn't merged yet, rather than stacking a second. Load the maps on the path from the root to the focus region — the low-resolution view. Zoom into individual waypoints on demand during conversation; don't front-load them.
 
 2. **Sweep landed research.** Any research waypoint whose `## Findings` arrived since the last session — including findings sitting uncommitted on the branch from agents that outlived their session: gist it onto its map (Decisions so far) and run the reference's resolution bookkeeping before new work starts.
 
@@ -21,11 +21,11 @@ Deepen the bundle: resolve the focus waypoint with the operator, keep the maps h
 
 5. **Bookkeep** per the reference: Decision and stamp into the waypoint, gist onto its map, sweep fog/blocked/stale prose, cut newly-sharp waypoints, dispatch `agentic-sdlc:waypoint-researcher` for new research — and **check for quiet**, walking up from the resolved waypoint's map.
 
-6. **Lint, commit, push, and make sure the session's PR exists.** Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lint_bundle.py" design/` and fix every finding before committing. **Merging is the operator's act, in the Forgejo UI**; no session touches main.
+6. **Lint, commit, land the branch.** Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lint_bundle.py" design/` and fix every finding before committing. Then ask the operator to land the session on main — **their typed yes is the approval**; fast-forward merge, push, delete the branch, per the reference's version-control contract. If they defer, push the branch and stop; a PR exists only if they ask for one.
 
 ## The pull to build
 
-Somewhere along the way a resolved waypoint will look like ten minutes of code, and the operator may say "just set it up while we're here." **The pull to do the work is the signal you've reached the map's edge, not permission to cross it.** The root map's own destination line — no code ships from the bundle — is the standing rule; building from a design branch buries a feature where no verifier, spec, or reviewer will ever meet it.
+Somewhere along the way a resolved waypoint will look like ten minutes of code, and the operator may say "just set it up while we're here." **The pull to do the work is the signal you've reached the map's edge, not permission to cross it.** The doctrine's project-wide invariant — no code ships from the bundle — is the standing rule; building from a design branch buries a feature where no verifier, spec, or reviewer will ever meet it.
 
 Record the decision, then say where the build actually lands: a slice in the subtree's eventual issues, or — if the operator genuinely wants it today — its own change through the normal pipeline, started outside the bundle. That costs one sentence now and keeps the bundle a design record instead of a half-shipped branch.
 
