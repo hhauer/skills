@@ -133,7 +133,7 @@ Four types, declared in frontmatter:
   ```
 
   Dispatched the moment the waypoint exists; never blocks a session. The researcher writes into the working tree; the session commits whatever has landed by the time it ends, and findings that land after the last commit sit uncommitted on the branch until the next session's sweep commits them.
-- **Prototype** — a cheap throwaway artifact built so the operator has something concrete to react to, when "how should this look/behave" is the question. The artifact lives beside the waypoint, clearly marked throwaway; the `## Decision` records the verdict (with the operator's `verified` stamp, like any decision), and only the verdict survives — once it does, delete the artifact. The bundle is mutable and git keeps the corpse.
+- **Prototype** — a cheap throwaway artifact built so the operator has something concrete to see and operate, when "how should this look/behave" is the question. The session writes the build brief in conversation with the operator, as prose beneath the `## Question` — what to roughly build, what interaction the operator needs to have with it. Built by the `agentic-sdlc:waypoint-prototyper` agent, dispatched the moment the waypoint exists — cutting the waypoint together is the consent; there is no separate build gate. The agent builds into `<waypoint-name>.prototype/` beside the waypoint (a directory the bundle lint skips by that exact suffix), under a deliberate ceremony exemption — no TDD, no review; its one quality bar is that the artifact runs — and writes one section back, `## Artifact`: how to run the thing and what to look at. It never writes the `## Decision`. The operator reacts in a session — the dispatching one or a later deepen; the background agent is a builder the operator never talks to. The verdict lands as the `## Decision` (with the operator's `verified` stamp, like any decision), and only the verdict survives: recording it is also the moment the artifact dies — delete the `.prototype/` directory and the `## Artifact` section with it. The bundle is mutable and git keeps the corpse. A prototype is sized to one agent run; a brief the agent reports back as too big is reshaped into smaller waypoints, not built anyway.
 - **Task** — manual work that must happen before a decision can be made (provision access, sign up for a service, move data so its shape can be seen). The one type that *does* rather than decides; its `## Question` names what it unblocks, and it records a `## Done` section: what happened, plus any facts later waypoints depend on.
 
 ## Fog of war
@@ -186,11 +186,11 @@ Standing rules: facts findable in the environment are looked up, never asked. De
 
 Resolving a waypoint changes the map around it. Every resolution, in order:
 
-1. Write `## Decision` into the waypoint — the what and the why, per the mutability rule above — and stamp `verified` with the operator's actor and the confirmation time.
+1. Write `## Decision` into the waypoint — the what and the why, per the mutability rule above — and stamp `verified` with the operator's actor and the confirmation time. For a Prototype waypoint this is also when the artifact dies: delete its `.prototype/` directory and its `## Artifact` section — only the verdict survives.
 2. Move its name to **Decisions so far** in its nearest enclosing map, with a one-line gist.
 3. **Sweep the map against the new answer.** Fog this answer sharpened graduates into waypoints (and leaves Not-yet-specified). Blocked waypoints whose last blocker just closed move to Frontier. Prose anywhere the answer made stale gets fixed — in this map or any other; the bundle is mutable. Waypoints the answer invalidated are amended or deleted; waypoints it revealed as past the destination are proposed for Out of scope.
 4. Newly surfaced sharp questions become waypoints, wired into Frontier or Blocked.
-5. New research waypoints get `agentic-sdlc:waypoint-researcher` dispatched before the session ends.
+5. New research waypoints get `agentic-sdlc:waypoint-researcher` dispatched before the session ends; new Prototype waypoints — brief written beneath the Question first — get `agentic-sdlc:waypoint-prototyper` the same way.
 6. **Check for quiet.** Walk up from the resolved waypoint's map toward the root; if the sweep left any subtree quiet, propose the commitment conversation for the highest quiet node (see below).
 7. Run the lint, fix what it finds, commit, and land the branch per the version-control contract above.
 
