@@ -165,6 +165,52 @@ class TestCleanBundle(FixtureBase):
         self.assertEqual(findings, [], msg="\n".join(str(f) for f in findings))
 
 
+class TestPrototypeArtifacts(FixtureBase):
+    """*.prototype/ directories hold throwaway prototype artifacts — never concepts."""
+
+    def test_md_inside_prototype_dir_is_skipped(self) -> None:
+        self.write_valid_root()
+        self.write("payment-history-view.prototype/README.md",
+                   "# How to run\n\nOpen index.html — no frontmatter, not a concept.\n")
+        self.assertEqual(lint(self.bundle), [])
+
+    def test_md_nested_deep_inside_prototype_dir_is_skipped(self) -> None:
+        self.write_valid_root()
+        self.write("billing/invoice-look.prototype/docs/notes.md",
+                   "scaffolder output, no frontmatter\n")
+        self.write("billing/map.md", """\
+            ---
+            type: Map
+            generated: { by: claude-code/test-model, at: 2026-08-02T10:00:00Z }
+            ---
+
+            # Billing
+
+            ## Destination
+
+            Billing design resolved end to end.
+            """)
+        self.assertEqual(lint(self.bundle), [])
+
+    def test_log_md_inside_prototype_dir_is_skipped(self) -> None:
+        self.write_valid_root()
+        self.write("payment-history-view.prototype/log.md",
+                   "an artifact file that happens to be named log.md\n")
+        self.assertEqual(lint(self.bundle), [])
+
+    def test_index_md_inside_prototype_dir_is_skipped(self) -> None:
+        self.write_valid_root()
+        self.write("payment-history-view.prototype/index.md",
+                   "artifact landing page, not the bundle pin\n")
+        self.assertEqual(lint(self.bundle), [])
+
+    def test_prototype_suffix_on_file_not_dir_is_still_linted(self) -> None:
+        self.write_valid_root()
+        self.write("stray.prototype.md", "# Stray\n\nNo frontmatter.\n")
+        findings = lint(self.bundle)
+        self.assertIn("missing-frontmatter", self.rules(findings))
+
+
 class TestFrontmatterParsing(FixtureBase):
     def test_missing_frontmatter_is_error(self) -> None:
         self.write_valid_root()

@@ -7,7 +7,8 @@ and /agentic-sdlc:wayfinding-deepen sessions catch format drift before committin
 
 Checked invariants:
   - Every concept (non-reserved .md) carries parseable frontmatter with a known
-    `type` (Map, Decision, Research, Prototype, Task).
+    `type` (Map, Decision, Research, Prototype, Task). Files inside a
+    `*.prototype/` directory are prototype artifacts, not concepts — skipped.
   - The bundle root has index.md pinning okf_version "0.2" and a map.md; every
     map has a non-empty Destination.
   - Maps use only the skeleton sections, omit empty sections, keep Regions and
@@ -226,6 +227,8 @@ class BundleLinter:
             self.error(root_map, 1, "missing-root-map",
                        "bundle root needs a map.md — the root map is the bundle's entry point.")
         for path in sorted(self.bundle.rglob("*.md")):
+            if any(part.endswith(".prototype") for part in path.parent.parts):
+                continue  # prototype artifacts are throwaway builds, not concepts
             name = path.name
             if name == "index.md":
                 self.lint_index(path)
