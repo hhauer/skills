@@ -1,0 +1,8 @@
+{
+  "name": "atlas",
+  "description": "Design wayfinding over a project's knowledge bundle: widen and deepen skills plus the waypoint-researcher and waypoint-prototyper agents.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Harley Hauer"
+  }
+}

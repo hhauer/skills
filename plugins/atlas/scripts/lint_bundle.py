@@ -2,8 +2,8 @@
 # ABOUTME: Validates an OKF v0.2 design bundle against the wayfinding doctrine's mechanical invariants.
 # ABOUTME: Usage: python3 lint_bundle.py <bundle-dir>  (e.g. design/)
 """
-Lints a design bundle (see references/wayfinding.md) so /agentic-sdlc:wayfinding-widen
-and /agentic-sdlc:wayfinding-deepen sessions catch format drift before committing.
+Lints a design bundle (see references/wayfinding.md) so /atlas:widen
+and /atlas:deepen sessions catch format drift before committing.
 
 Checked invariants:
   - Every concept (non-reserved .md) carries parseable frontmatter with a known
