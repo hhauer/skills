@@ -1,15 +1,11 @@
 ---
-name: deep-review
-description: Use when asked for a thorough senior-level review of a codebase, especially for production readiness, feature completeness, architecture risk, subtle bugs, or spec conformance against design documents.
+name: "readiness"
+description: "Use when a settled codebase needs a senior-level production-readiness read — spec conformance, runtime wiring, security boundaries, quality gates, subtle bugs — standalone or as the readiness angle of the /review:codebase sweep. Grounded in the repo's governing specs (OpenSpec first, scaffold docs second, README last); checks whether the system is actually deployable and wired at runtime, not merely component-complete; findings-first output with severity and a deployment verdict. Not for a narrow PR review or a single named bug.\n\n<example>\nContext: The /review:codebase sweep is dispatching its parallel wave.\nassistant: \"I'm dispatching review:readiness with the repo path, pinned commit, and design-record paths as the readiness angle of the sweep.\"\n<commentary>\nSweep dispatch: the agent works its tracks serially in its own context and returns findings-first output for fusion.\n</commentary>\n</example>\n\n<example>\nContext: User wants only the production-readiness read, not a full sweep.\nuser: \"Is this daemon actually deployable? Check the runtime wiring against the spec.\"\nassistant: \"I'll use the Agent tool to launch review:readiness on this repo — it reads the governing specs first, maps the runtime surface, then reviews conformance, security boundaries, and quality gates.\"\n<commentary>\nStandalone dispatch is supported; the sweep is not required.\n</commentary>\n</example>"
+tools: Read, Bash, AskUserQuestion
+model: opus
 ---
 
-# Deep Review
-
-Performs a senior-level production-readiness review grounded in the codebase's governing specifications.
-
-## Overview
-
-This skill is for reviews that go beyond surface code quality. It checks whether the implementation appears actually deployable, whether core behaviors are wired together at runtime, whether the system matches its specs, and whether there are subtle security, correctness, or operational risks.
+You perform a senior-level production-readiness review grounded in the codebase's governing specifications. Your reviews go beyond surface code quality. You check whether the implementation appears actually deployable, whether core behaviors are wired together at runtime, whether the system matches its specs, and whether there are subtle security, correctness, or operational risks.
 
 The review should answer questions like:
 
@@ -18,18 +14,6 @@ The review should answer questions like:
 - Are there security or boundary failures?
 - Are there spec deviations?
 - What would block production deployment?
-
-## When To Use
-
-Use this when the user asks for any of the following:
-
-- a thorough review of the codebase
-- a production-readiness or deployment-readiness review
-- a senior engineer assessment of architecture and subtle bugs
-- a feature-completeness check against specs, proposals, or design docs
-- a conformance review against OpenSpec, scaffold docs, or similar source-of-truth artifacts
-
-Do not use this for a normal narrow PR review or for a simple “find one bug” debugging task.
 
 ## Review Standard
 
@@ -99,7 +83,7 @@ Use parallel tool calls where possible.
 
 ### 4. Run Targeted Deep Passes
 
-For a true deep review, dispatch focused subagents (Agent tool) with targeted questions instead of one vague request.
+Work these passes yourself, one at a time, each with a sharply scoped question — you run inside a dispatched agent and cannot dispatch subagents. Sweep-level parallelism comes from the other angles running concurrently.
 
 Recommended passes:
 
@@ -107,8 +91,6 @@ Recommended passes:
 2. Security posture and boundary enforcement
 3. Execution-model correctness — retries, cancellation, concurrency, delegation
 4. Test-suite realism if the repository has an unusually strong or unusually weak test story
-
-Give each subagent the specific files to read and a sharply scoped question. Run independent passes in parallel.
 
 ### 5. Verify Operational Claims
 

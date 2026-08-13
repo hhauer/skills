@@ -1,8 +1,3 @@
----
-name: codebase-design
-description: Use when designing or restructuring a module's interface, deciding where a seam or abstraction belongs, judging whether existing indirection earns its keep, choosing how a refactored module will be tested, or when a review, audit, or design discussion needs a pinned shared vocabulary for module design (depth, seam, adapter, leverage, locality).
----
-
 # Codebase Design
 
 Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured. The aim is leverage for callers, locality for maintainers, and testability for everyone.
@@ -62,7 +57,7 @@ When designing an interface, ask:
 - **Depth is a property of the interface, not the implementation.** A deep module can be internally composed of small, mockable, swappable parts — they just aren't part of the interface. A module can have **internal seams** (private to its implementation, used by its own tests) as well as the **external seam** at its interface.
 - **The deletion test.** Imagine deleting the module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep.
 - **The interface is the test surface.** Callers and tests cross the same seam. If you want to test *past* the interface, the module is probably the wrong shape.
-- **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce a seam unless something actually varies across it. When two analyses disagree about whether a seam belongs somewhere, this rule and the dependency categories in [references/DEEPENING.md](references/DEEPENING.md) adjudicate — count the real adapters, classify the dependency, and the verdict falls out; don't argue from taste.
+- **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce a seam unless something actually varies across it. When two analyses disagree about whether a seam belongs somewhere, this rule and the dependency categories in [DEEPENING.md](DEEPENING.md) adjudicate — count the real adapters, classify the dependency, and the verdict falls out; don't argue from taste.
 
 ## Designing for testability
 
@@ -94,7 +89,7 @@ Good interfaces make testing natural:
 
 3. **Small surface area.** Fewer methods = fewer tests needed. Fewer params = simpler test setup.
 
-When proposing a restructuring, state how the restructured module will be tested — which dependency category it falls into (see [references/DEEPENING.md](references/DEEPENING.md)) and therefore whether its tests use the real dependency, a local stand-in, an injected fake at a port, or a mock. "Easier to test" without that classification is an assertion, not a design.
+When proposing a restructuring, state how the restructured module will be tested — which dependency category it falls into (see [DEEPENING.md](DEEPENING.md)) and therefore whether its tests use the real dependency, a local stand-in, an injected fake at a port, or a mock. "Easier to test" without that classification is an assertion, not a design.
 
 ## Relationships
 
@@ -112,5 +107,5 @@ When proposing a restructuring, state how the restructured module will be tested
 
 ## Going deeper
 
-- **Deepening a cluster given its dependencies** — see [references/DEEPENING.md](references/DEEPENING.md): dependency categories, seam discipline, and replace-don't-layer testing.
-- **Exploring alternative interfaces** — see [references/DESIGN-IT-TWICE.md](references/DESIGN-IT-TWICE.md): spin up parallel sub-agents to design the interface several radically different ways, then compare on depth, locality, and seam placement.
+- **Deepening a cluster given its dependencies** — see [DEEPENING.md](DEEPENING.md): dependency categories, seam discipline, and replace-don't-layer testing.
+- **Exploring alternative interfaces** — see [DESIGN-IT-TWICE.md](DESIGN-IT-TWICE.md): spin up parallel sub-agents to design the interface several radically different ways, then compare on depth, locality, and seam placement.
