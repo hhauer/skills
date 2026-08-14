@@ -13,7 +13,7 @@ transfer. It is self-documenting — `fj <command> --help` and
 
 This skill is **only** the delta: the places where `gh` muscle memory
 produces a wrong `fj` command, or where the answer costs an agent a failed
-round trip to discover. Verified against `fj v0.5.0`.
+round trip to discover. Verified against `fj v0.6.0`.
 
 ## Where `gh` instinct misleads you
 
@@ -22,9 +22,9 @@ round trip to discover. Verified against `fj v0.5.0`.
   - `-r`/`--repo` = the repo spec (e.g. `owner/name`).
   Using `gh`'s `-R owner/repo` habit on `fj` targets the wrong thing.
   And the flags are **per-subcommand, not uniform**: `issue search`/`pr
-  search` take `-r owner/repo`, but `fj issue view <ID>` accepts **only**
-  `--remote <localname>` plus the positional ID — passing `-r` or `--repo`
-  there errors (`unexpected argument`). Relying on the cwd's default remote
+  search` take `-r owner/repo`, but `fj issue view <ID>` takes no
+  `-r`/`--repo` at all — passing it there errors (`unexpected argument`).
+  Relying on the cwd's default remote
   works only when its host matches the API host; otherwise it errors
   `can't figure out what repo to access` — put the repo in the ID itself as
   `{owner}/{repo}#N` (e.g. `fj issue view owner/name#42`). Same form applies
@@ -38,10 +38,11 @@ round trip to discover. Verified against `fj v0.5.0`.
   closed (unlike `gh issue list`'s state column). To know state, run
   `-s open` / `-s closed` separately, or `fj issue view <N>` (which does
   print `Open`/`Closed`).
-- **`-H`/`--host` is a GLOBAL flag — it goes before the subcommand.**
-  `fj -H host.example issue create ...`, not `fj issue create ... -H host`.
-  Placed after the subcommand it fails with `unexpected argument '-H'`.
-  Needed only when `fj` can't resolve the API host — it errors
+- **`-H`/`--host` is a GLOBAL flag — put it before the subcommand.**
+  `fj -H host.example issue create ...`. Most subcommands reject a trailing
+  `-H` with `unexpected argument '-H'`; only the `view` commands and
+  `whoami` also accept it locally, so before-the-subcommand is the one
+  placement that works everywhere. Needed only when `fj` can't resolve the API host — it errors
   `can't figure out what repo to access`. A remote whose host matches an
   instance you're logged into (`fj auth list`) resolves fine, including SSH
   on a non-standard port; reach for `-H` when the host is outside your
@@ -94,6 +95,9 @@ round trip to discover. Verified against `fj v0.5.0`.
   <user>@<host>` — "into", one word, not gh's "signed in to" — and `whoami`
   has no machine-readable output flag. (This pair of quirks silently broke
   the `fj-project` owner-detection parser.)
+- **There is no `fj api`.** `gh api` muscle memory has no equivalent here —
+  when a subcommand looks missing, there is no raw-API escape hatch to fall
+  back on; what the CLI exposes is all there is.
 - **Version is `fj version`,** not `fj --version`.
 
 ## Commands that are gh-divergent enough to spell out
@@ -106,13 +110,15 @@ fj pr status 42 --wait                                         # block until che
 fj pr merge 42 -M squash -d                                    # -M method, -d deletes branch
 #   -M methods: merge | rebase | rebase-merge | squash | manual
 fj pr search -s all                                            # -s: open (default) | closed | all
-fj pr view 42 body|diff|files|commits|comments|labels          # subcommand, not a flag
+fj pr view 42 body|comment|comments|labels|assignees|diff|files|commits   # subcommand, not a flag
 
 # Issues
 fj issue edit 7 labels -a added -r removed                     # -a add, -r/--rm remove
 #   ^ succeeds SILENTLY (no output). Don't assume failure; verify with `issue view`.
-fj issue view 7                                                # labels shown in plain view —
-#   issue view has NO `labels` subcommand (that's pr-only); `issue view 7 labels` errors
+fj issue view 7                                                # labels shown in plain view
+fj issue view 7 body|comment|comments|assignees                # body is the default; there is
+#   NO `labels` subcommand (that's pr-only — `issue view 7 labels` errors); `comments`
+#   lists every comment, `comment` views one
 fj issue close 7 -w "reason"                                   # -w/--with-msg, inline arg required
 
 # Labels — repo-level defs under `fj repo labels [REPO] <subcommand>` (NOT `fj label`)
