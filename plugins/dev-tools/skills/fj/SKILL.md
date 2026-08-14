@@ -21,14 +21,17 @@ round trip to discover. Verified against `fj v0.6.0`.
   - `-R`/`--remote` = a **local git remote name** (e.g. `origin`), not `owner/repo`.
   - `-r`/`--repo` = the repo spec (e.g. `owner/name`).
   Using `gh`'s `-R owner/repo` habit on `fj` targets the wrong thing.
-  And the flags are **per-subcommand, not uniform**: `issue search`/`pr
-  search` take `-r owner/repo`, but `fj issue view <ID>` takes no
-  `-r`/`--repo` at all — passing it there errors (`unexpected argument`).
-  Relying on the cwd's default remote
-  works only when its host matches the API host; otherwise it errors
-  `can't figure out what repo to access` — put the repo in the ID itself as
-  `{owner}/{repo}#N` (e.g. `fj issue view owner/name#42`). Same form applies
-  to `pr view`.
+  And the flags are **per-subcommand, not uniform**: `issue`/`pr` `search`
+  and `create` take `-r owner/repo` (so do the `wiki`, `actions`, `release`,
+  and `tag` families), but the other `issue`/`pr` subcommands (`view`,
+  `edit`, `close`, `comment`, `merge`, …) take no `-r`/`--repo` at all —
+  passing it there errors (`unexpected argument`). Relying on the cwd's
+  default remote works only when its host matches the API host; otherwise
+  it errors `can't figure out what repo to access` — put the repo in the ID
+  itself as `{owner}/{repo}#N` (e.g. `fj issue view owner/name#42`). Same
+  form applies to `pr view`. One more trap: on `repo create` and
+  `org repo create`, `-r`/`--remote` means "create a **local git remote**
+  with this name for the new repo" — not a repo spec.
 - **There is no `fj issue list` / `fj pr list`.** `gh`'s `list` verb is
   `search` here: `fj issue search -s all`, `fj pr search -s all`
   (`-s`: open (default) | closed | all). `search` with no query lists
@@ -38,15 +41,13 @@ round trip to discover. Verified against `fj v0.6.0`.
   closed (unlike `gh issue list`'s state column). To know state, run
   `-s open` / `-s closed` separately, or `fj issue view <N>` (which does
   print `Open`/`Closed`).
-- **`-H`/`--host` is a GLOBAL flag — put it before the subcommand.**
-  `fj -H host.example issue create ...`. Most subcommands reject a trailing
-  `-H` with `unexpected argument '-H'`; only the `view` commands and
-  `whoami` also accept it locally, so before-the-subcommand is the one
-  placement that works everywhere. Needed only when `fj` can't resolve the API host — it errors
+- **`-H`/`--host` goes anywhere.** Every subcommand accepts `-H`, before
+  or after the subcommand — `fj -H host.example issue create ...` and
+  `fj issue create ... -H host.example` both work. Needed only when `fj` can't resolve the API host — it errors
   `can't figure out what repo to access`. A remote whose host matches an
   instance you're logged into (`fj auth list`) resolves fine, including SSH
   on a non-standard port; reach for `-H` when the host is outside your
-  authenticated instances. Same placement rule for any global flag.
+  authenticated instances.
 - **`fj repo labels` targets a repo by positional `[REPO]`, not `-r`/`-R`.**
   The shape is `fj repo labels [REPO] <subcommand>` (e.g.
   `fj repo labels owner/name view`); it accepts neither `-r` nor `-R`
@@ -85,6 +86,11 @@ round trip to discover. Verified against `fj v0.6.0`.
     `--body` flag — passing `--body` errors) or `--body-file`
   - `pr close` / `issue close`: `-w`/`--with-msg "reason"` — and note `-w`
     with **no argument** also opens the editor.
+  - `issue edit` / `pr edit` `title|body|comment`: omitting the new-value
+    positional opens the current value in the editor.
+  - Optional-argument flags passed bare do the same: `release create -b`,
+    `tag create -b`, `pr merge -m`, and `actions variables create` with no
+    DATA argument all open the editor.
 - **fj output is not parser-safe.** Every interpolated field (usernames,
   titles, hosts, issue numbers) is wrapped in invisible Unicode directional
   isolates (U+2066–U+2069) in **all** fj output, and `--style minimal` does
@@ -107,8 +113,11 @@ round trip to discover. Verified against `fj v0.6.0`.
 fj pr create "Title" --base main --head feature --body "..."   # --base AND --head
 fj pr create -A --base main                                    # -A/--autofill from commits
 fj pr status 42 --wait                                         # block until checks finish
-fj pr merge 42 -M squash -d                                    # -M method, -d deletes branch
+fj pr merge 42 -M squash -d -t "Title (#42)" -m "Body"         # -M method, -d deletes branch
 #   -M methods: merge | rebase | rebase-merge | squash | manual
+#   -t/-m set the merge/squash commit title and body; -m with NO argument opens the editor
+fj pr review 42 list                                           # list reviews; -c adds inline
+#   review comments, -a includes stale/dismissed reviews
 fj pr search -s all                                            # -s: open (default) | closed | all
 fj pr view 42 body|comment|comments|labels|assignees|diff|files|commits   # subcommand, not a flag
 
@@ -137,6 +146,7 @@ fj org label list|add|edit|rm                                  # define labels o
 fj whoami            # current signed-in identity for the active instance
 fj auth list         # all instances you're logged into
 fj auth login        # opens browser (interactive — not agent-runnable)
+fj auth add-token    # the agent-runnable fallback: token as arg or piped via stdin
 ```
 
 Everything else (`release`, `tag`, `repo`, `actions`, `wiki`, plain
