@@ -41,9 +41,14 @@ round trip to discover. Verified against `fj v0.6.0`.
   closed (unlike `gh issue list`'s state column). To know state, run
   `-s open` / `-s closed` separately, or `fj issue view <N>` (which does
   print `Open`/`Closed`).
-- **`-H`/`--host` goes anywhere.** Every subcommand accepts `-H`, before
+- **`-H`/`--host` goes anywhere — except `fj auth logout`.** Every other
+  subcommand accepts `-H`, before
   or after the subcommand — `fj -H host.example issue create ...` and
-  `fj issue create ... -H host.example` both work. Needed only when `fj` can't resolve the API host — it errors
+  `fj issue create ... -H host.example` both work. `auth logout` alone takes
+  the host as a **positional** and rejects the flag outright
+  (`error: unexpected argument '-H' found`), which is doubly easy to trip
+  over because its sibling `auth add-token` does accept `-H`.
+  Needed only when `fj` can't resolve the API host — it errors
   `can't figure out what repo to access`. A remote whose host matches an
   instance you're logged into (`fj auth list`) resolves fine, including SSH
   on a non-standard port; reach for `-H` when the host is outside your
@@ -146,7 +151,12 @@ fj org label list|add|edit|rm                                  # define labels o
 fj whoami            # current signed-in identity for the active instance
 fj auth list         # all instances you're logged into
 fj auth login        # opens browser (interactive — not agent-runnable)
-fj auth add-token    # the agent-runnable fallback: token as arg or piped via stdin
+fj auth add-token -H <host>   # agent-runnable fallback: token as arg or via stdin
+#   Refuses to REPLACE a credential: with one already stored for that host it
+#   fails `new key:key for <host> already exists`, leaves the old one in place,
+#   and still exits 0 — so a switch that silently did nothing looks like it
+#   worked. Verify with `fj whoami`, and log out first to change identity.
+fj auth logout <host>         # HOST is POSITIONAL — `-H` errors here
 ```
 
 Everything else (`release`, `tag`, `repo`, `actions`, `wiki`, plain
