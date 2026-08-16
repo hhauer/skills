@@ -585,6 +585,212 @@ class TestResearch(FixtureBase):
         self.assertIn("source-missing-resource", self.rules(self.errors(lint(self.bundle))))
 
 
+VALID_DOCS_INDEX = """\
+---
+okf_version: "0.2"
+---
+
+# Docs bundle
+
+* [Storage module](storage.md) - the storage layer
+"""
+
+VALID_DOCS_MODULE = """\
+---
+type: Module
+title: Storage
+generated: { by: claude-code/test-model, at: 2026-08-16T10:00:00Z }
+code_commit: abc1234
+sources:
+  - { id: src, resource: ../src/storage.py }
+---
+
+# Surface
+
+`save()` and `load()`.
+"""
+
+VALID_HUMAN_GUIDE = """\
+---
+type: Guide
+title: Operating notes
+generated: { by: human:tester, at: 2026-08-16T10:00:00Z }
+---
+
+# Notes
+
+Hand-authored operating advice.
+"""
+
+
+class DocsFixtureBase(FixtureBase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.bundle = self.root / "docs"
+        self.bundle.mkdir()
+
+    def write_valid_docs_root(self) -> None:
+        self.write("index.md", VALID_DOCS_INDEX)
+
+
+class TestDocsMode(DocsFixtureBase):
+    def test_minimal_docs_bundle_is_clean(self) -> None:
+        self.write_valid_docs_root()
+        self.write("storage.md", VALID_DOCS_MODULE)
+        self.assertEqual(lint(self.bundle, kind="docs"), [])
+
+    def test_no_root_map_required(self) -> None:
+        self.write_valid_docs_root()
+        findings = lint(self.bundle, kind="docs")
+        self.assertNotIn("missing-root-map", self.rules(findings))
+
+    def test_all_six_machine_types_accepted(self) -> None:
+        self.write_valid_docs_root()
+        for i, ctype in enumerate(["Module", "Helper", "CLI", "Playbook", "DataModel", "API"]):
+            self.write(f"c{i}.md", VALID_DOCS_MODULE.replace("type: Module", f"type: {ctype}"))
+        self.assertEqual(lint(self.bundle, kind="docs"), [])
+
+    def test_design_type_is_unknown_in_docs_mode(self) -> None:
+        self.write_valid_docs_root()
+        self.write("waypoint.md", VALID_DOCS_MODULE.replace("type: Module", "type: Research"))
+        findings = lint(self.bundle, kind="docs")
+        self.assertIn("unknown-type", self.rules(self.errors(findings)))
+
+    def test_human_authored_concept_may_carry_any_type(self) -> None:
+        self.write_valid_docs_root()
+        self.write("guide.md", VALID_HUMAN_GUIDE)
+        self.assertEqual(lint(self.bundle, kind="docs"), [])
+
+    def test_machine_concept_with_nonstandard_type_is_error(self) -> None:
+        self.write_valid_docs_root()
+        self.write("guide.md", VALID_HUMAN_GUIDE.replace("human:tester", "claude-code/test-model"))
+        findings = lint(self.bundle, kind="docs")
+        self.assertIn("unknown-type", self.rules(self.errors(findings)))
+
+    def test_missing_generated_is_error_in_docs_mode(self) -> None:
+        self.write_valid_docs_root()
+        self.write("storage.md", VALID_DOCS_MODULE.replace(
+            "generated: { by: claude-code/test-model, at: 2026-08-16T10:00:00Z }\n", ""))
+        findings = lint(self.bundle, kind="docs")
+        self.assertIn("missing-generated", self.rules(self.errors(findings)))
+
+    def test_machine_concept_without_sources_is_error(self) -> None:
+        self.write_valid_docs_root()
+        content = VALID_DOCS_MODULE.replace(
+            "sources:\n  - { id: src, resource: ../src/storage.py }\n", "")
+        self.write("storage.md", content)
+        findings = lint(self.bundle, kind="docs")
+        self.assertIn("machine-concept-without-sources", self.rules(self.errors(findings)))
+
+    def test_human_concept_without_sources_is_fine(self) -> None:
+        self.write_valid_docs_root()
+        self.write("guide.md", VALID_HUMAN_GUIDE)
+        findings = lint(self.bundle, kind="docs")
+        self.assertNotIn("machine-concept-without-sources", self.rules(findings))
+
+    def test_status_value_validated(self) -> None:
+        self.write_valid_docs_root()
+        self.write("storage.md", VALID_DOCS_MODULE.replace(
+            "type: Module", "type: Module\nstatus: golden"))
+        findings = lint(self.bundle, kind="docs")
+        self.assertIn("invalid-status", self.rules(self.errors(findings)))
+
+    def test_lifecycle_status_values_accepted(self) -> None:
+        self.write_valid_docs_root()
+        for i, status in enumerate(["draft", "stable", "deprecated"]):
+            self.write(f"c{i}.md", VALID_DOCS_MODULE.replace(
+                "type: Module", f"type: Module\nstatus: {status}"))
+        self.assertEqual(lint(self.bundle, kind="docs"), [])
+
+    def test_stale_after_must_be_iso_date(self) -> None:
+        self.write_valid_docs_root()
+        self.write("storage.md", VALID_DOCS_MODULE.replace(
+            "type: Module", "type: Module\nstale_after: soon"))
+        findings = lint(self.bundle, kind="docs")
+        self.assertIn("invalid-stale-after", self.rules(self.errors(findings)))
+
+    def test_stale_after_iso_date_accepted(self) -> None:
+        self.write_valid_docs_root()
+        self.write("storage.md", VALID_DOCS_MODULE.replace(
+            "type: Module", "type: Module\nstale_after: 2026-12-31"))
+        self.assertEqual(lint(self.bundle, kind="docs"), [])
+
+    def test_log_md_is_allowed_with_date_headings(self) -> None:
+        self.write_valid_docs_root()
+        self.write("log.md", "# Update log\n\n## 2026-08-16\n* **Creation**: founded.\n")
+        self.assertEqual(lint(self.bundle, kind="docs"), [])
+
+    def test_log_md_non_date_heading_is_error(self) -> None:
+        self.write_valid_docs_root()
+        self.write("log.md", "# Update log\n\n## Recent changes\n* stuff.\n")
+        findings = lint(self.bundle, kind="docs")
+        self.assertIn("log-heading-not-date", self.rules(self.errors(findings)))
+
+    def test_log_md_with_frontmatter_is_error(self) -> None:
+        self.write_valid_docs_root()
+        self.write("log.md", "---\ntype: Log\n---\n\n## 2026-08-16\n* founded.\n")
+        findings = lint(self.bundle, kind="docs")
+        self.assertIn("log-frontmatter", self.rules(self.errors(findings)))
+
+    def test_broken_body_link_is_warning_in_docs_mode(self) -> None:
+        self.write_valid_docs_root()
+        self.write("storage.md", VALID_DOCS_MODULE + "\nSee [gone](missing.md).\n")
+        findings = lint(self.bundle, kind="docs")
+        self.assertIn("broken-link", self.rules(self.warnings(findings)))
+        self.assertEqual(self.errors(findings), [])
+
+    def test_status_key_allowed_in_docs_mode(self) -> None:
+        # design mode bans OKF status; docs mode uses it as lifecycle
+        self.write_valid_docs_root()
+        self.write("storage.md", VALID_DOCS_MODULE.replace(
+            "type: Module", "type: Module\nstatus: draft"))
+        findings = lint(self.bundle, kind="docs")
+        self.assertNotIn("status-key", self.rules(findings))
+
+    def test_footnote_without_matching_source_id_is_error(self) -> None:
+        self.write_valid_docs_root()
+        self.write("storage.md", VALID_DOCS_MODULE + "\nClaim.[^nope]\n\n[^nope]: gone\n")
+        findings = lint(self.bundle, kind="docs")
+        self.assertIn("unmatched-footnote", self.rules(self.errors(findings)))
+
+    def test_regex_class_in_inline_code_is_not_a_footnote(self) -> None:
+        self.write_valid_docs_root()
+        self.write("storage.md", VALID_DOCS_MODULE +
+                   "\nFilenames are sanitized with `re.sub(r\"[^\\w\\-]\", \"_\", name)`.\n")
+        findings = lint(self.bundle, kind="docs")
+        self.assertNotIn("unmatched-footnote", self.rules(findings))
+
+    def test_regex_class_in_fenced_code_is_not_a_footnote(self) -> None:
+        self.write_valid_docs_root()
+        self.write("storage.md", VALID_DOCS_MODULE +
+                   "\n```python\npattern = r\"[^abc]\"\n```\n")
+        findings = lint(self.bundle, kind="docs")
+        self.assertNotIn("unmatched-footnote", self.rules(findings))
+
+    def test_design_mode_remains_default(self) -> None:
+        # the design bundle from the existing fixtures still lints clean with no kind arg
+        self.bundle = self.root / "design"  # already created by FixtureBase.setUp
+        self.write_valid_root()
+        self.assertEqual(lint(self.bundle), [])
+
+
+class TestDocsCli(DocsFixtureBase):
+    SCRIPT = Path(__file__).parent / "lint_bundle.py"
+
+    def test_kind_flag(self) -> None:
+        self.write_valid_docs_root()
+        self.write("storage.md", VALID_DOCS_MODULE)
+        clean = subprocess.run(
+            [sys.executable, str(self.SCRIPT), "--kind", "docs", str(self.bundle)],
+            capture_output=True, text=True)
+        self.assertEqual(clean.returncode, 0, clean.stdout + clean.stderr)
+
+        bad_kind = subprocess.run(
+            [sys.executable, str(self.SCRIPT), "--kind", "wiki", str(self.bundle)],
+            capture_output=True, text=True)
+        self.assertEqual(bad_kind.returncode, 2)
+
+
 class TestCli(FixtureBase):
     SCRIPT = Path(__file__).parent / "lint_bundle.py"
 

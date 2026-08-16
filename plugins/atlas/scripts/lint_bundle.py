@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-# ABOUTME: Validates an OKF v0.2 design bundle against the wayfinding doctrine's mechanical invariants.
-# ABOUTME: Usage: python3 lint_bundle.py <bundle-dir>  (e.g. design/)
+# ABOUTME: Validates an OKF v0.2 knowledge bundle (design or docs kind) against its doctrine's mechanical invariants.
+# ABOUTME: Usage: python3 lint_bundle.py [--kind design|docs] <bundle-dir>  (e.g. design/ or docs/)
 """
-Lints a design bundle (see references/wayfinding.md) so /atlas:widen
-and /atlas:deepen sessions catch format drift before committing.
+Lints a knowledge bundle so the atlas skills catch format drift before
+committing. One script, two bundle kinds sharing one substrate:
 
-Checked invariants:
+`--kind design` (default; see references/wayfinding.md — used by /atlas:widen
+and /atlas:deepen):
   - Every concept (non-reserved .md) carries parseable frontmatter with a known
     `type` (Map, Decision, Research, Prototype, Task). Files inside a
     `*.prototype/` directory are prototype artifacts, not concepts — skipped.
@@ -19,6 +20,20 @@ Checked invariants:
     resolution catch.
   - Filled `## Findings` require `sources`; footnote labels must match
     sources[].id; every source names a resource.
+  - log.md is banned — history lives in git.
+
+`--kind docs` (used by /atlas:document):
+  - Machine-authored concepts carry one of the code-derivable types (Module,
+    Helper, CLI, Playbook, DataModel, API) and a `sources` list; human-authored
+    concepts (`generated.by` is `human:<id>`) may carry any type and need no
+    sources — crafted prose is not a function of the code.
+  - `generated` is required on every concept: the ownership rule (rewrite
+    machine concepts, verify-and-flag human ones) keys off its actor.
+  - OKF lifecycle is live: `status` must be draft|stable|deprecated when
+    present; `stale_after` must be an absolute YYYY-MM-DD date.
+  - log.md is allowed (it is the bundle's update history); its `##` headings
+    must be ISO dates and it carries no frontmatter. No map machinery.
+  - Broken links are warnings only (OKF consumers tolerate them).
 
 Exit status: 0 if no errors (warnings allowed), 1 if any errors, 2 on usage.
 """
@@ -32,6 +47,9 @@ from pathlib import Path
 
 OKF_VERSION = "0.2"
 KNOWN_TYPES = {"Map", "Decision", "Research", "Prototype", "Task"}
+DOCS_MACHINE_TYPES = {"Module", "Helper", "CLI", "Playbook", "DataModel", "API"}
+STATUS_VALUES = {"draft", "stable", "deprecated"}
+ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 WAYPOINT_TYPES = KNOWN_TYPES - {"Map"}
 MAP_SECTIONS = {
     "Destination", "Notes", "Regions", "Frontier", "Blocked",
@@ -201,9 +219,23 @@ def section_text(section: Section | None) -> str:
     return "\n".join(section.content).strip()
 
 
+def strip_code(text: str) -> str:
+    """Drop fenced code blocks and inline code spans, where regex character
+    classes like `[^\\w-]` would otherwise read as footnote labels."""
+    lines, in_fence = [], False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            lines.append(line)
+    return re.sub(r"`[^`]*`", "", "\n".join(lines))
+
+
 class BundleLinter:
-    def __init__(self, bundle: Path) -> None:
+    def __init__(self, bundle: Path, kind: str = "design") -> None:
         self.bundle = bundle
+        self.kind = kind
         self.findings: list[Finding] = []
 
     def add(self, severity: Severity, path: Path, line: int, rule: str, message: str) -> None:
@@ -222,10 +254,11 @@ class BundleLinter:
         if not root_index.is_file():
             self.error(root_index, 1, "missing-index",
                        f"bundle root needs an index.md pinning okf_version \"{OKF_VERSION}\".")
-        root_map = self.bundle / "map.md"
-        if not root_map.is_file():
-            self.error(root_map, 1, "missing-root-map",
-                       "bundle root needs a map.md — the root map is the bundle's entry point.")
+        if self.kind == "design":
+            root_map = self.bundle / "map.md"
+            if not root_map.is_file():
+                self.error(root_map, 1, "missing-root-map",
+                           "bundle root needs a map.md — the root map is the bundle's entry point.")
         for path in sorted(self.bundle.rglob("*.md")):
             if any(part.endswith(".prototype") for part in path.parent.parts):
                 continue  # prototype artifacts are throwaway builds, not concepts
@@ -233,12 +266,30 @@ class BundleLinter:
             if name == "index.md":
                 self.lint_index(path)
             elif name == "log.md":
-                self.error(path, 1, "log-file",
-                           "log.md is banned in the design bundle — there is no session log; "
-                           "history lives in git.")
+                if self.kind == "design":
+                    self.error(path, 1, "log-file",
+                               "log.md is banned in the design bundle — there is no session log; "
+                               "history lives in git.")
+                else:
+                    self.lint_log(path)
+            elif self.kind == "docs":
+                self.lint_docs_concept(path)
             else:
                 self.lint_concept(path)
         return self.findings
+
+    def lint_log(self, path: Path) -> None:
+        lines = path.read_text().splitlines()
+        if lines and lines[0].strip() == "---":
+            self.error(path, 1, "log-frontmatter",
+                       "log.md is a reserved file and carries no frontmatter (OKF §9).")
+            return
+        for lineno, raw in enumerate(lines, start=1):
+            match = SECTION_RE.match(raw)
+            if match and not ISO_DATE_RE.match(match.group(1)):
+                self.error(path, lineno, "log-heading-not-date",
+                           f"log.md headings are ISO dates (YYYY-MM-DD), got {match.group(1)!r} — "
+                           "the log is a chronological record, newest first.")
 
     def lint_index(self, path: Path) -> None:
         fm_lines, _body, _offset, err = split_document(path.read_text())
@@ -313,6 +364,85 @@ class BundleLinter:
         else:
             self.lint_waypoint(path, ctype, data, sections, human_verified)
 
+    # --- docs concepts ---
+
+    def lint_docs_concept(self, path: Path) -> None:
+        text = path.read_text()
+        fm_lines, body, offset, err = split_document(text)
+        if err:
+            self.error(path, 1, "unparseable-frontmatter", err)
+            return
+        if fm_lines is None:
+            self.error(path, 1, "missing-frontmatter",
+                       "every concept is an OKF document: YAML frontmatter with a type, then the body.")
+            return
+        data, parse_err = parse_frontmatter(fm_lines)
+        if parse_err or data is None:
+            self.error(path, 1, "unparseable-frontmatter", parse_err or "empty frontmatter")
+            return
+
+        ctype = data.get("type")
+        if not ctype or not isinstance(ctype, str):
+            self.error(path, 1, "missing-type", "frontmatter must carry a non-empty `type`.")
+            return
+
+        generated = data.get("generated")
+        if generated is None:
+            self.error(path, 1, "missing-generated",
+                       "docs concepts must carry `generated: { by, at }` — the ownership rule "
+                       "(rewrite machine concepts, verify-and-flag human ones) keys off the actor.")
+        elif not (isinstance(generated, dict) and generated.get("by") and generated.get("at")):
+            self.error(path, 1, "malformed-generated",
+                       "`generated` must be an inline mapping with `by` and `at`.")
+        by = generated.get("by", "") if isinstance(generated, dict) else ""
+        human_authored = str(by).startswith("human:")
+
+        if not human_authored and ctype not in DOCS_MACHINE_TYPES:
+            self.error(path, 1, "unknown-type",
+                       f"type {ctype!r} is not a code-derivable docs type "
+                       f"({', '.join(sorted(DOCS_MACHINE_TYPES))}). Human-authored concepts "
+                       "(generated.by human:<id>) may carry their own types.")
+
+        self.check_verified(path, data)
+
+        has_sources, source_ids = self.check_sources(path, data)
+        if not human_authored and not has_sources:
+            self.error(path, 1, "machine-concept-without-sources",
+                       "machine-authored docs concepts derive from the code and record that "
+                       "provenance in `sources` — without it, staleness cannot be scoped by git.")
+
+        status = data.get("status")
+        if status is not None and status not in STATUS_VALUES:
+            self.error(path, 1, "invalid-status",
+                       f"`status` is OKF lifecycle: {' | '.join(sorted(STATUS_VALUES))}; got {status!r}.")
+
+        stale_after = data.get("stale_after")
+        if stale_after is not None and not ISO_DATE_RE.match(str(stale_after)):
+            self.error(path, 1, "invalid-stale-after",
+                       f"`stale_after` is an absolute YYYY-MM-DD date, got {stale_after!r} — "
+                       "staleness stays a plain date comparison.")
+
+        # Docs bodies have no section skeleton: check links and footnotes over raw lines.
+        for lineno, raw in enumerate(body, start=offset + 1):
+            for match in LINK_RE.finditer(raw):
+                target = match.group(2).strip()
+                if EXTERNAL_TARGET_RE.match(target):
+                    continue
+                target = target.split("#", 1)[0]
+                if not target:
+                    continue
+                resolved = (self.bundle / target.lstrip("/")) if target.startswith("/") \
+                    else (path.parent / target)
+                if not resolved.exists():
+                    self.warning(path, lineno, "broken-link",
+                                 f"link target {match.group(2)!r} does not exist in the bundle.")
+        body_text = strip_code("\n".join(body))
+        for label in set(FOOTNOTE_LABEL_RE.findall(body_text)):
+            if label not in source_ids:
+                self.error(path, 1, "unmatched-footnote",
+                           f"footnote label [^{label}] has no matching `sources` entry id — "
+                           "the label is the join key into sources.")
+
     # --- trust family ---
 
     def check_trust(self, path: Path, data: dict) -> bool:
@@ -324,7 +454,10 @@ class BundleLinter:
         elif not (isinstance(generated, dict) and generated.get("by") and generated.get("at")):
             self.error(path, 1, "malformed-generated",
                        "`generated` must be an inline mapping with `by` and `at`.")
+        return self.check_verified(path, data)
 
+    def check_verified(self, path: Path, data: dict) -> bool:
+        """Validate the `verified` shape; return whether a human verifier exists."""
         verified = data.get("verified")
         entries: list[object]
         if verified is None:
@@ -345,6 +478,24 @@ class BundleLinter:
             if isinstance(entry, dict) and str(entry.get("by", "")).startswith("human:"):
                 human = True
         return human
+
+    def check_sources(self, path: Path, data: dict) -> tuple[bool, set[str]]:
+        """Validate the `sources` shape; return (present, footnote-joinable ids)."""
+        sources = data.get("sources")
+        source_ids: set[str] = set()
+        if sources is None:
+            return False, source_ids
+        if not isinstance(sources, list):
+            self.error(path, 1, "source-missing-resource",
+                       "`sources` must be a list of entries, each with a `resource`.")
+            return True, source_ids
+        for entry in sources:
+            if not isinstance(entry, dict) or not entry.get("resource"):
+                self.error(path, 1, "source-missing-resource",
+                           "every `sources` entry names a `resource` (URL, path, or scope).")
+            if isinstance(entry, dict) and entry.get("id"):
+                source_ids.add(str(entry["id"]))
+        return True, source_ids
 
     # --- links ---
 
@@ -414,26 +565,15 @@ class BundleLinter:
                        "`## Decision` is filled but no `human:` actor appears in `verified` — "
                        "decisions are the operator's; record the confirmation or remove the text.")
 
-        sources = data.get("sources")
-        source_ids: set[str] = set()
-        if sources is not None:
-            if not isinstance(sources, list):
-                self.error(path, 1, "source-missing-resource",
-                           "`sources` must be a list of entries, each with a `resource`.")
-            else:
-                for entry in sources:
-                    if not isinstance(entry, dict) or not entry.get("resource"):
-                        self.error(path, 1, "source-missing-resource",
-                                   "every `sources` entry names a `resource` (URL, path, or scope).")
-                    if isinstance(entry, dict) and entry.get("id"):
-                        source_ids.add(str(entry["id"]))
+        has_sources, source_ids = self.check_sources(path, data)
 
-        if section_text(sections.get("Findings")) and not sources:
+        if section_text(sections.get("Findings")) and not has_sources:
             self.error(path, 1, "findings-without-sources",
                        "`## Findings` is filled but frontmatter has no `sources` — "
                        "research claims carry their provenance.")
 
-        body_text = "\n".join(line for section in sections.values() for line in section.content)
+        body_text = strip_code(
+            "\n".join(line for section in sections.values() for line in section.content))
         for label in set(FOOTNOTE_LABEL_RE.findall(body_text)):
             if label not in source_ids:
                 self.error(path, 1, "unmatched-footnote",
@@ -441,8 +581,8 @@ class BundleLinter:
                            "the label is the join key into sources.")
 
 
-def lint(bundle_dir: Path) -> list[Finding]:
-    return BundleLinter(Path(bundle_dir)).run()
+def lint(bundle_dir: Path, kind: str = "design") -> list[Finding]:
+    return BundleLinter(Path(bundle_dir), kind).run()
 
 
 def format_finding(f: Finding) -> str:
@@ -450,14 +590,22 @@ def format_finding(f: Finding) -> str:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
-        print("Usage: lint_bundle.py <bundle-dir>", file=sys.stderr)
+    usage = "Usage: lint_bundle.py [--kind design|docs] <bundle-dir>"
+    args = argv[1:]
+    kind = "design"
+    if args[:1] == ["--kind"]:
+        if len(args) < 2 or args[1] not in ("design", "docs"):
+            print(usage, file=sys.stderr)
+            return 2
+        kind, args = args[1], args[2:]
+    if len(args) != 1:
+        print(usage, file=sys.stderr)
         return 2
-    bundle_dir = Path(argv[1])
+    bundle_dir = Path(args[0])
     if not bundle_dir.is_dir():
         print(f"Not a directory: {bundle_dir}", file=sys.stderr)
         return 2
-    findings = lint(bundle_dir)
+    findings = lint(bundle_dir, kind)
     for finding in findings:
         print(format_finding(finding))
         print()
