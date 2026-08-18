@@ -1,7 +1,7 @@
 {
   "name": "review",
   "description": "Code and documentation review: the codebase sweep and survey skills plus the readiness, structure-miner, refactor-audit, arcc-review, and design-adversary agents. Bundles the just recipe library refactor-audit runs on.",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "author": {
     "name": "Harley Hauer"
   }

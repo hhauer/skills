@@ -39,9 +39,9 @@ security-scan:
     @echo "--- gitleaks (full history scan) ---"
     @gitleaks detect --no-banner --redact || true
 
-# Behavioral history from git log — change frequency and recent activity.
 # Excludes .beads/ (tracker metadata, not source) so the churn ranking
 # reflects code activity, not bead-export commits.
+# Behavioral history from git log — change frequency and recent activity.
 [no-cd]
 history:
     @echo "=== refactor::history: change-frequency top-30 (last 12mo) ==="

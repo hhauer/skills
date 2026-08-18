@@ -10,12 +10,12 @@ tpl := justfile_directory() + "/templates"
 # not against the directory where this module file lives. `[no-cd]` keeps
 # just from chdir'ing into the directory this module lives in before running.
 
-# Verify global + project-pinned tools (via go tool directives + mise).
 # Go itself is project-pinned via mise, so every go invocation in
 # this module goes through `mise exec --` — bare `go` breaks in any shell that
 # hasn't run `mise activate`, which includes agent-run recipes.
 # gocyclo/gocognit are probed with a plain path run: both exit 2 on -h (flag
 # usage convention) but exit 0 on a real run without -over, findings or not.
+# Verify global + project-pinned tools (via go tool directives + mise).
 [no-cd]
 preflight:
     @echo "=== refactor::preflight (go) ==="
@@ -84,11 +84,11 @@ types:
     @echo "(Go: strict by default; type-check folds into compilation)"
     @mise exec -- go build ./...
 
-# Known-vuln scan + security smell.
 # osv-scanner (OSV.dev) complements govulncheck — govulncheck only flags
 # vulns actually reachable from the call graph, osv-scanner flags every
 # vulnerable dep version; together they cover "what's reachable now" and
 # "what could be reached after the next refactor."
+# Known-vuln scan + security smell.
 [no-cd]
 security:
     @echo "=== refactor::security (go) ==="

@@ -35,26 +35,29 @@ preflight:
     @pnpm exec knip --version
     @pnpm exec type-coverage --version
 
-# Contract conformance via dependency-cruiser. err-long (not text) because only
-# the err/err-long reporters propagate depcruise's non-zero exit code on an
-# error-severity violation — the text reporter always exits 0, silently masking
-# a red contract. err-long also prints each violation with its rule comment.
+# err-long (not text) because only the err/err-long reporters propagate
+# depcruise's non-zero exit code on an error-severity violation — the text
+# reporter always exits 0, silently masking a red contract. err-long also
+# prints each violation with its rule comment.
+# Contract conformance via dependency-cruiser.
 [no-cd]
 architecture:
     @echo "=== refactor::architecture (typescript) ==="
     @pnpm exec depcruise --validate --output-type err-long src
 
-# Dependency graph: structural summary (depcruise's --validate path covers
-# cycle detection when the project's .dependency-cruiser.cjs declares a
-# no-circular rule; that's the canonical place for it, not a duplicate tool).
+# depcruise's --validate path covers cycle detection when the project's
+# .dependency-cruiser.cjs declares a no-circular rule; that's the canonical
+# place for it, not a duplicate tool.
+# Dependency graph: structural summary via depcruise.
 [no-cd]
 deps:
     @echo "=== refactor::deps (typescript) ==="
     @pnpm exec depcruise --output-type text src
 
-# Per-function complexity via lizard — polyglot, sortable, gives CCN + NLOC
-# + parameter count + nesting depth per function (not just a single pass/fail
-# threshold the way an eslint complexity rule does).
+# Lizard is polyglot and sortable, giving CCN + NLOC + parameter count +
+# nesting depth per function (not just a single pass/fail threshold the way
+# an eslint complexity rule does).
+# Per-function complexity table via lizard.
 [no-cd]
 complexity:
     @echo "=== refactor::complexity (typescript) ==="
@@ -66,26 +69,27 @@ dead-code:
     @echo "=== refactor::dead-code (typescript) ==="
     @pnpm exec knip --reporter compact
 
-# Lint-debt density: oxlint always; the eslint pass joins in on Svelte-hybrid
-# projects (flat config present), where it covers the .svelte files its config scopes.
+# The eslint pass joins in only on Svelte-hybrid projects (flat config
+# present), where it covers the .svelte files its config scopes.
+# Lint-debt density: oxlint always, plus eslint on Svelte-hybrid projects.
 [no-cd]
 lint-debt:
     @echo "=== refactor::lint-debt (typescript) ==="
     @pnpm exec oxlint
     @if ls eslint.config.* >/dev/null 2>&1; then pnpm exec eslint --report-unused-disable-directives .; fi
 
-# Type coverage — where is the code escaping the type system?
 # --ignore-files excludes match the complexity recipe's lizard -x set:
 # adapter/SvelteKit/generic build outputs that would otherwise pollute
 # the percentage with minified vendor code.
+# Type coverage — where is the code escaping the type system?
 [no-cd]
 types:
     @echo "=== refactor::types (typescript) ==="
     @pnpm exec type-coverage --detail --ignore-files 'build/**' --ignore-files '.svelte-kit/**' --ignore-files 'node_modules/**' --ignore-files 'dist/**'
 
-# Known-vuln deps: osv-scanner (OSV.dev, broad ecosystem coverage) plus
-# pnpm audit (npm advisory db). Complementary — each catches things the
-# other misses.
+# osv-scanner (OSV.dev, broad ecosystem coverage) and pnpm audit (npm
+# advisory db) are complementary — each catches things the other misses.
+# Known-vuln deps via osv-scanner and pnpm audit.
 [no-cd]
 security:
     @echo "=== refactor::security (typescript) ==="
@@ -95,20 +99,21 @@ security:
     @echo "--- pnpm audit (npm advisory db) ---"
     @pnpm audit --audit-level=moderate || true
 
-# Test suite + coverage. --coverage uses vitest's default v8 provider;
-# install adds @vitest/coverage-v8 to the project for that.
+# --coverage uses vitest's default v8 provider; install adds
+# @vitest/coverage-v8 to the project for that.
+# Test suite + coverage.
 [no-cd]
 tests:
     @echo "=== refactor::tests (typescript) ==="
     @pnpm exec vitest run --coverage
 
-# Install the audit's project-level dev-tool requirements (operator-invoked), then
-# drop a default .dependency-cruiser.cjs if the project has no dependency-cruiser
+# Drops a default .dependency-cruiser.cjs if the project has no dependency-cruiser
 # config yet — never clobbers a tuned config (the architecture/deps recipes need a
 # config with a no-circular rule, which the default's `extends recommended`
 # provides). oxlint is assumed to already be a project dep;
 # Svelte-hybrid projects own their eslint + eslint-plugin-svelte stack themselves,
 # so this install adds no lint tooling.
+# Install the audit's project-level dev-tool requirements and default configs (operator-invoked).
 [no-cd]
 install:
     #!/usr/bin/env bash

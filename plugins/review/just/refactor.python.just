@@ -75,11 +75,12 @@ deps:
       echo "--- pydeps: dependency dict ($pkg) ---"; \
       uv run --no-sync pydeps "$pkg" --no-output --show-deps
 
-# Per-function complexity via lizard (polyglot, host-global; same tool
-# as the TS module). Per-function CCN + NLOC + parameter count + nesting
-# table, plus per-file averages and a warnings block for hotspots.
-# || true so the warnings exit (lizard returns 1 when CCN > 15 threshold
-# is hit) doesn't halt downstream recipe lines.
+# Lizard is polyglot and host-global — same tool as the TS module. Output is a
+# per-function CCN + NLOC + parameter count + nesting table, plus per-file
+# averages and a warnings block for hotspots. || true so the warnings exit
+# (lizard returns 1 when CCN > 15 threshold is hit) doesn't halt downstream
+# recipe lines.
+# Per-function complexity table via lizard.
 [no-cd]
 complexity:
     @echo "=== refactor::complexity (python) ==="
@@ -103,9 +104,9 @@ types:
     @echo "=== refactor::types (python) ==="
     @uv run --no-sync ty check
 
-# Known-vuln deps + bandit security smell.
 # osv-scanner (OSV.dev) complements pip-audit (PyPI advisory) — different
 # advisory sources, each catches things the other misses.
+# Known-vuln deps + bandit security smell.
 [no-cd]
 security:
     @echo "=== refactor::security (python) ==="
