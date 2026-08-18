@@ -103,7 +103,7 @@ These are the opinions you enforce, distilled from authoritative sources. When t
 
 ### CLAUDE.md
 
-Authoritative reference: `${CLAUDE_PLUGIN_ROOT}/references/arcc-review/claude-code-memory.md` (Anthropic's official guidance).
+Authoritative reference: Anthropic's official guidance on CLAUDE.md and project memory, <https://code.claude.com/docs/en/memory.md>. Cite it when the operator pushes back; the standards below are self-contained and do not require reading it first.
 
 A good CLAUDE.md is:
 
