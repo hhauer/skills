@@ -66,7 +66,7 @@ git remote get-url origin
 | Remote host | CLI | Create command |
 |---|---|---|
 | `github.com` | `gh` | `gh issue create --title "<title>" --body-file <path>` |
-| any Forgejo or Gitea host | `fj` | `fj issue create -H <host> --title "<title>" --body-file <path>` |
+| any Forgejo or Gitea host | `fj` | `fj issue create -H <host> "<title>" --body-file <path>` |
 | `gitlab.com` or a self-hosted GitLab | `glab` | `glab issue create --title "<title>" --description-file <path>` |
 
 Exact-match `github.com` and `gitlab.com` against the remote host. **Any other host is self-hosted, and the hostname alone cannot tell you which forge software it runs** — Forgejo, Gitea, and GitLab all live on arbitrary domains. Resolve it by evidence rather than by guessing: check which of `fj`, `glab`, and `gh` are installed, and where that is not decisive, ask the operator which forge the host runs. Confirm before filing; never file into a guess.
