@@ -28,11 +28,11 @@ Default to a code-review mindset with findings first.
 
 When multiple design sources exist, apply them in this order:
 
-1. The live OpenSpec in `openspec/specs/`
+1. **The repo's live behavior specs**, whatever surface carries them — `openspec/specs/`, an ADR directory, `DECISIONS.md`, a `docs/spec/` tree. Identify the surface in Step 1 of the workflow rather than assuming one; a repo may carry more than one, and a repo may carry none.
 2. The originating scaffold or reference design material
 3. README or implementation commentary
 
-If the OpenSpec is explicit, it wins. If the OpenSpec is ambiguous, use the scaffold/reference material. Do not let the current implementation redefine intended behavior.
+If the spec is explicit, it wins. If the spec is ambiguous, use the scaffold/reference material. If the repo has no spec surface at all, say so in the report — "no governing spec" is a finding about the repo, not a reason to promote the README. Do not let the current implementation redefine intended behavior.
 
 ## Workflow
 
@@ -42,7 +42,7 @@ Before judging the code, inspect the authoritative design artifacts.
 
 At minimum:
 
-- the relevant OpenSpec capability specs
+- the repo's behavior specs, on whatever surface carries them — `openspec/specs/` capability specs, an ADR directory, `DECISIONS.md`, a `docs/spec/` tree. Look before assuming; a repo may carry several, or none.
 - the proposal/design docs if they describe intended divergences or scope
 - any upstream scaffold/reference docs the user identified
 

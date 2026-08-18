@@ -33,13 +33,14 @@ its freshness machinery.
 
 ## The boundary with the spec corpus
 
-`openspec/specs/` is the verification contract: what the system is *required*
-to do, checked against shipped code. `docs/` is operational knowledge and the
-reuse surface: what the system actually is, for the next reader who has to
-work in it. Never restate a spec requirement in the bundle — point at the
-owning capability spec instead. Where spec and code disagree, record the
-disagreement as a finding; the spec corpus is corrected through its own
-pipeline, never by documentation fiat.
+A repo's **behavior-spec surface** — `openspec/specs/`, an ADR directory,
+`DECISIONS.md`, whatever this repo carries — is the verification contract:
+what the system is *required* to do, checked against shipped code. `docs/`
+is operational knowledge and the reuse surface: what the system actually is,
+for the next reader who has to work in it. Never restate a spec requirement
+in the bundle — point at the owning capability spec instead. Where spec and
+code disagree, record the disagreement as a finding; the spec corpus is
+corrected through its own pipeline, never by documentation fiat.
 
 `docs/` is the single source of truth for all documentation of the system —
 agent-facing and user-facing. Consumers reach it through a project-local

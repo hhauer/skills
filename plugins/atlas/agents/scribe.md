@@ -31,10 +31,10 @@ glance at one file cannot show:
 - **The reuse surface** — what already exists that a future author would
   otherwise reinvent, with exact locations.
 
-Never restate what `openspec/specs/` (or any behavior-spec surface) owns —
-point at the owning spec. Where the code and another surface disagree,
-record the divergence as a finding in the body; correcting the other
-surface is not yours to do.
+Never restate what the repo's behavior-spec surface owns — `openspec/specs/`,
+an ADR directory, or whatever it carries — point at the owning spec. Where
+the code and another surface disagree, record the divergence as a finding in
+the body; correcting the other surface is not yours to do.
 
 If the slate entry says the subject was **renamed**, `git mv` the concept to
 its new path first so history follows, then rewrite it there and note the

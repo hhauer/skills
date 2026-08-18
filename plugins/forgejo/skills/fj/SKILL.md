@@ -81,8 +81,8 @@ round trip to discover. Verified against `fj v0.6.0`.
   given name`) when the label is absent and never creates it. To assert a
   label idempotently: try `edit` first, and `create` only when stderr
   contains `No label found` — never on any other error, or a
-  transient/permission failure spawns a duplicate. The `fj-project` script
-  enforces the canonical label set this way.
+  transient/permission failure spawns a duplicate. This is the pattern to use
+  for asserting a canonical label set idempotently.
 - **Omitting a body opens `$EDITOR` and blocks the agent.** Always pass a
   body explicitly on anything that takes one:
   - `pr create` / `issue create`: `--body` / `--body-file` (the title is
@@ -104,8 +104,8 @@ round trip to discover. Verified against `fj v0.6.0`.
   `perl -CS -pe 's/[\x{2066}-\x{2069}]//g'`. Wording is also gh-divergent
   where you'd parse it: `fj whoami` prints `currently signed into
   <user>@<host>` — "into", one word, not gh's "signed in to" — and `whoami`
-  has no machine-readable output flag. (This pair of quirks silently broke
-  the `fj-project` owner-detection parser.)
+  has no machine-readable output flag. (This pair of quirks silently breaks
+  naive owner-detection parsers.)
 - **There is no `fj api`.** `gh api` muscle memory has no equivalent here —
   when a subcommand looks missing, there is no raw-API escape hatch to fall
   back on; what the CLI exposes is all there is.
