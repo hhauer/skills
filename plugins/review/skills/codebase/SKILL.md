@@ -32,7 +32,7 @@ One parallel wave — all seven Agent calls in a single message:
 | 6 | `review:refactor-audit` | repo path; the agent runs its own preflight |
 | 7 | `review:arcc-review` | the resolved docs scope, pinned commit |
 
-**Degradation rule.** An angle that halts on its own preflight — refactor-audit when the repo hasn't opted into the `just refactor::*` recipe contract is the common case — becomes a coverage note ("health angle unavailable: no recipe contract"), and the sweep continues. Gaps are reported, never papered over; a degraded sweep is still a sweep.
+**Degradation rule.** An angle that halts on its own preflight — refactor-audit on a repo whose language it ships no module for, or whose audit tools are not installed, is the common case — becomes a coverage note ("health angle unavailable: <reason>"), and the sweep continues. Gaps are reported, never papered over; a degraded sweep is still a sweep.
 
 **No mid-wave questions.** Every brief tells its agent not to stall on a clarifying question: where an agent would ask, it records the gap as a coverage note and proceeds. The operator reads gaps in the report, not prompts mid-run.
 
