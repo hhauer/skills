@@ -47,7 +47,7 @@ preflight:
     @uv run --locked pydeps --version > /dev/null
     @uv run --locked lint-imports --help > /dev/null
     @uv run --locked python -c "import pytest_cov; print('pytest-cov', pytest_cov.__version__)"
-    @if [ -e .importlinter ] || grep -q '^\[importlinter\]' setup.cfg 2>/dev/null || grep -q '^\[tool\.importlinter\]' pyproject.toml 2>/dev/null; then :; else echo '!! no import-linter config found (.importlinter / setup.cfg / pyproject.toml) — refactor::architecture will fail; run: just refactor::install'; fi
+    @if [ -e .importlinter ] || grep -q '^\[importlinter\]' setup.cfg 2>/dev/null || grep -q '^\[tool\.importlinter\]' pyproject.toml 2>/dev/null; then :; else echo '!! no import-linter config found (.importlinter / setup.cfg / pyproject.toml) — refactor::architecture will fail; run: just --justfile "${CLAUDE_PLUGIN_ROOT}/just/python.just" refactor::install'; fi
 
 # Contract conformance — does the code match the intended architecture?
 [no-cd]
