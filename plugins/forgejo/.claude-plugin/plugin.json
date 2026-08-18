@@ -1,0 +1,8 @@
+{
+  "name": "forgejo",
+  "description": "The fj skill: a command surface for Forgejo and Gitea repositories — issues, labels, pull requests, releases, and CI status — for any host, via the fj CLI.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Harley Hauer"
+  }
+}
