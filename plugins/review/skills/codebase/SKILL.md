@@ -55,4 +55,29 @@ Findings first, ranked. Per finding: what is wrong, why it matters, where (evide
 
 ## Routing
 
-After the operator reviews the report, file the findings they choose as draft issues — for Forgejo repos via `dev-tools:fj` — one issue per finding, the finding format as the body, self-contained enough that a future propose session needs no re-derivation. Interface exploration for a chosen candidate uses `${CLAUDE_PLUGIN_ROOT}/references/codebase-design/DESIGN-IT-TWICE.md`.
+After the operator reviews the report, file the findings they choose as draft issues — one issue per finding, the finding format as the body, self-contained enough that a future spec session needs no re-derivation.
+
+**Detect the forge from the git remote, then use its CLI.** Read the host once:
+
+```bash
+git remote get-url origin
+```
+
+| Remote host | CLI | Create command |
+|---|---|---|
+| `github.com` | `gh` | `gh issue create --title "<title>" --body-file <path>` |
+| any Forgejo or Gitea host | `fj` | `fj issue create -H <host> --title "<title>" --body-file <path>` |
+| `gitlab.com` or a self-hosted GitLab | `glab` | `glab issue create --title "<title>" --description-file <path>` |
+
+A host that is not `github.com` or `gitlab.com` is a Forgejo/Gitea instance often enough that `fj` is the right first guess — confirm with the operator before filing rather than guessing silently. Check the chosen CLI resolves (`command -v gh`) before the first call; a missing binary is the fallback case below, not an error.
+
+**When no forge CLI resolves, do not fail and do not file.** Emit each chosen finding as a ready-to-paste block — a title line and a body — and tell the operator to file them by hand. Losing the filing is a convenience cost; losing the findings is the whole review.
+
+```markdown
+### Issue 1 of N
+**Title:** <one-line title>
+
+<body: the finding format, verbatim>
+```
+
+Interface exploration for a chosen candidate uses `${CLAUDE_PLUGIN_ROOT}/references/codebase-design/DESIGN-IT-TWICE.md`.
