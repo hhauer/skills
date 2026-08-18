@@ -50,6 +50,6 @@ Present one combined report grouped by artifact: what's wrong, why (the evidence
 Then apply, with different rules per artifact type:
 
 - **Memories** — yours to fix. Update, delete, and re-index directly; note what you did in the report.
-- **README / CLAUDE.md** — repo files under the repo's normal version-control rules. Get Harley's go-ahead on the proposed edits, make them on an appropriate branch per the repo's workflow, and never land on main without explicit approval.
+- **README / CLAUDE.md** — repo files under the repo's normal version-control rules. Get the operator's go-ahead on the proposed edits, make them on an appropriate branch per the repo's workflow, and never land on main without their explicit approval.
 
 Scope discipline: survey updates artifacts to match reality — it does not fix the code, restructure docs wholesale, or invent new documentation. If the audit surfaces a real problem in the repo itself, file a draft backlog issue (or flag it in the report if the repo has no backlog) rather than expanding the survey.
