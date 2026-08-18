@@ -50,6 +50,11 @@ disclosure. Separately maintained doc surfaces retire into the bundle
 through the founding run's migration slate; rendering layers over the bundle
 are licensed future work, not something a run builds.
 
+Everything inside `docs/` is the bundle. No file may live there outside it,
+and the linter stays strict — there is no ignore mechanism. A pre-existing
+file found inside `docs/` is absorbed, moved out, or deleted; "leave alone"
+is a disposition only surfaces outside `docs/` can receive.
+
 ## Ownership: the actor is the boundary
 
 Every concept's `generated.by` actor divides the corpus into two regimes:

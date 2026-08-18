@@ -45,8 +45,11 @@ Helper, CLI, Playbook, DataModel, API), then classify:
   plausibly touches, so verifiers know where to look hardest.
 
 On a founding run, additionally inventory the repo's existing doc surfaces
-(README, doc folders, reuse indexes) with a proposed disposition each —
-absorb / retire / leave alone — for the operator's migration slate.
+(README, doc folders, reuse indexes) with a proposed disposition each for
+the operator's migration slate: absorb / retire / leave alone for surfaces
+outside docs/; absorb / move (out of docs/) / delete for files already
+inside docs/ — everything inside docs/ is the bundle, so leave alone is
+never a disposition there.
 
 ## What you write
 

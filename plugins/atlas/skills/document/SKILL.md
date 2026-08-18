@@ -136,9 +136,12 @@ Only on a run that creates the bundle:
 
 - **Migration slate.** Inventory the repo's existing doc surfaces (README,
   doc folders, wikis, per-project reuse indexes) and propose a disposition
-  for each: **absorb** (content regenerates into concepts, old surface
-  retires), **retire** (obsolete), or **leave alone** (still owns its job —
-  README quickstarts, spec surfaces). The operator disposes; running
+  for each. Surfaces outside `docs/`: **absorb** (content regenerates into
+  concepts, old surface retires), **retire** (obsolete), or **leave alone**
+  (still owns its job — README quickstarts, spec surfaces). Files already
+  inside `docs/`: **absorb**, **move** (out of `docs/`), or **delete** only —
+  everything inside `docs/` is the bundle, so leave alone is not available
+  there and the linter grants no ignores. The operator disposes; running
   non-interactively, put the slate in the run report and touch none of them.
 - **The pointer.** Consumers find the bundle through a project-local
   CLAUDE.md line pointing at `docs/index.md` ("before writing a helper,
