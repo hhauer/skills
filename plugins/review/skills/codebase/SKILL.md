@@ -69,7 +69,9 @@ git remote get-url origin
 | any Forgejo or Gitea host | `fj` | `fj issue create -H <host> --title "<title>" --body-file <path>` |
 | `gitlab.com` or a self-hosted GitLab | `glab` | `glab issue create --title "<title>" --description-file <path>` |
 
-A host that is not `github.com` or `gitlab.com` is a Forgejo/Gitea instance often enough that `fj` is the right first guess — confirm with the operator before filing rather than guessing silently. Check the chosen CLI resolves (`command -v gh`) before the first call; a missing binary is the fallback case below, not an error.
+Exact-match `github.com` and `gitlab.com` against the remote host. **Any other host is self-hosted, and the hostname alone cannot tell you which forge software it runs** — Forgejo, Gitea, and GitLab all live on arbitrary domains. Resolve it by evidence rather than by guessing: check which of `fj`, `glab`, and `gh` are installed, and where that is not decisive, ask the operator which forge the host runs. Confirm before filing; never file into a guess.
+
+Then check that the CLI the table selected actually resolves — `command -v` that specific binary — before the first call. A missing binary is the fallback case below, not an error.
 
 **When no forge CLI resolves, do not fail and do not file.** Emit each chosen finding as a ready-to-paste block — a title line and a body — and tell the operator to file them by hand. Losing the filing is a convenience cost; losing the findings is the whole review.
 
