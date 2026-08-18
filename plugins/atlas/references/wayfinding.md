@@ -148,7 +148,7 @@ Each map's destination fixes its scope; work past it is out of scope — not fog
 
 ## The bundle is mutable — and the why is load-bearing
 
-The bundle is **not a verification contract**. OpenSpec's records are immutable because shipped code is checked against them; the design bundle is checked against nothing. It is the design north star, co-mutated — edited deliberately and jointly, the way any high-ranking single source of truth is. Corrections happen in place, not in appendices; closing a question has never precluded reopening it.
+The bundle is **not a verification contract**. A behavior-spec surface's records — an OpenSpec tree's, an ADR directory's, whatever the repo carries — are immutable because shipped code is checked against them; the design bundle is checked against nothing. It is the design north star, co-mutated — edited deliberately and jointly, the way any high-ranking single source of truth is. Corrections happen in place, not in appendices; closing a question has never precluded reopening it.
 
 Mutability is what makes the why mandatory. A future editor reading `decided X` with no stated reason cannot tell whether the reason still holds, and will either preserve the decision superstitiously or overwrite it carelessly. Git history technically holds the ramble; nobody reads git history for design rationale. So:
 
