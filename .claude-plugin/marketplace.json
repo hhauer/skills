@@ -1,0 +1,27 @@
+{
+  "name": "hhauer-skills",
+  "description": "Claude Code plugins for design mapping, as-built documentation, codebase review, and Forgejo/Gitea repository work.",
+  "owner": {
+    "name": "Harley Hauer"
+  },
+  "plugins": [
+    {
+      "name": "atlas",
+      "source": "./plugins/atlas",
+      "description": "Tends a project's OKF knowledge bundles: the widen and deepen skills map design intent under design/ (researching open questions with the waypoint-researcher and waypoint-prototyper agents), and the document skill generates and maintains as-built documentation under docs/ from the code itself (via the enumerator, scribe, synthesizer, and verifier agents). Ships the lint_bundle.py linter both sides run before committing.",
+      "category": "workflow"
+    },
+    {
+      "name": "review",
+      "source": "./plugins/review",
+      "description": "Code and documentation review: the codebase sweep and survey skills plus the readiness, structure-miner, refactor-audit, arcc-review, and design-adversary agents. Bundles the just recipe library refactor-audit runs on.",
+      "category": "review"
+    },
+    {
+      "name": "forgejo",
+      "source": "./plugins/forgejo",
+      "description": "The fj skill: a command surface for Forgejo and Gitea repositories — issues, labels, pull requests, releases, and CI status — for any host, via the fj CLI.",
+      "category": "development"
+    }
+  ]
+}
