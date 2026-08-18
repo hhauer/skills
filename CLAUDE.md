@@ -2,11 +2,11 @@
 
 ## This is a delivery repo
 
-This repo exists to be installed. It holds three Claude Code plugins —
-`atlas`, `review`, and `forgejo` — as a marketplace.
+This repo exists to be installed. It holds Claude Code plugins — one
+directory each under `plugins/` — as a marketplace.
 
 **These plugins are authored from a separate private workbench**, normally
-the directory this repo is cloned into. That workbench carries the
+this checkout's parent directory. That workbench carries the
 skill-design rules, the eval-driven authoring method, the prose
 anti-pattern reference, and the backlog. **If it is available, read its
 `CLAUDE.md` before editing anything here.** Issues on this repo are
@@ -39,8 +39,11 @@ fact and drifts silently.
 
 - `plugins/atlas/scripts/lint_bundle.py` validates an OKF v0.2 knowledge
   bundle. Tests: `python3 plugins/atlas/scripts/test_lint_bundle.py`.
-- `plugins/review/just/*.just` are the recipe modules `review:refactor-audit`
-  runs. After editing one:
+- `plugins/review/just/` holds the recipe library `review:refactor-audit`
+  runs: one `refactor.<lang>.just` module per language importing the shared
+  `refactor.common.just`, a one-line `<lang>.just` mount file per language,
+  and `templates/` config seeds the recipes copy into projects. After
+  editing a `.just` file:
   `just --fmt --check --justfile plugins/review/just/<file>`.
 
 ## Version control
