@@ -1,6 +1,6 @@
 ---
 name: fj
-description: Claude-internal — Claude invokes this itself during its work; not useful to type directly. Use when interacting with Forgejo repositories via CLI — creating PRs, managing issues, releases, or CI status — or any time you'd reach for `gh` but the repo's remote is Forgejo (the default host) rather than GitHub.
+description: Claude-internal — Claude invokes this itself during its work; not useful to type directly. Use when interacting with Forgejo repositories via CLI — creating PRs, managing issues, releases, or CI status — or any time you'd reach for `gh` but the repo's remote is a Forgejo or Gitea host rather than GitHub.
 ---
 
 # fj (Forgejo CLI)
