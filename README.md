@@ -1,12 +1,12 @@
 # skills
 
-Three Claude Code plugins I built for my own work and use daily.
+Three Claude Code plugins, built for my own daily work and published as a marketplace.
 
-- `atlas` maps a project's open design questions before they are answered, and keeps as-built documentation true of the code.
+- `atlas` maintains two kinds of version-controlled knowledge bundles: a map of a project's open design questions under `design/`, and as-built documentation under `docs/`.
 - `review` audits a settled codebase and the docs that describe it.
-- `forgejo` carries what an agent needs to drive Forgejo and Gitea repositories from the command line.
+- `forgejo` documents the `fj` CLI for agents working against Forgejo and Gitea remotes.
 
-They are original plugins rather than a curated list of other people's. Where one adapts prior art, that plugin's `NOTICE.md` records what was borrowed and under which license: `atlas` adapts Matt Pocock's `wayfinder` skill and conforms to the Open Knowledge Format v0.2, and `review` bundles the Diátaxis documentation framework and material mined from the same skills collection.
+Where a plugin adapts prior art, its `NOTICE.md` records what was borrowed and under which license.
 
 ## Install
 
@@ -23,57 +23,48 @@ Each plugin stands alone. Installing one does not require the others.
 
 ## atlas — design maps and as-built docs
 
-Atlas covers two problems on one substrate. Some work is too large and too undecided to plan in a single session, and the reasoning behind what you eventually build evaporates into chat logs. Separately, documentation drifts from the code the moment it is written, because nothing forces it to update.
+Both bundle kinds conform to the [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog) and live in the repo, so design intent and documentation are versioned alongside the code they describe.
 
-`atlas` keeps both in version-controlled knowledge bundles conforming to the [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog).
+Three skills, each invoked as a slash command:
 
-`/atlas:widen` fans out breadth-first over one region of a problem and produces a map of the open questions — *waypoints* — plus named fog for what is not yet sharp enough to phrase as a question. It answers nothing on purpose, including the questions it could answer immediately. Research and prototype waypoints are handed to background agents so they never block the session.
+- `/atlas:widen` fans out over one region of a problem and maps its open questions as *waypoints*, with named fog for what is not yet sharp enough to phrase as a question. It records questions without answering them; resolution belongs to deepen. Research and prototype waypoints are handed to background agents, so they never block the session.
+- `/atlas:deepen` resolves one waypoint at a time in conversation. A decision enters the record only with the reason it was made and a human verification stamp; the agent cannot resolve a waypoint on its own. Findings that landed from background agents are swept onto the maps first, and when a subtree has no open questions left, the session offers to slice its resolved design into issue-sized units. Filing those is left to whatever backlog tool the project uses; the bundle records their build order.
+- `/atlas:document` generates and maintains a `docs/` bundle derived from the code. Founding a bundle and updating one are the same invocation: the run reads each concept's recorded commit pin, asks git what changed since, rewrites the concepts that went stale, regenerates the indexes, and re-verifies every concept against source. Prose a human wrote is flagged when the code contradicts it, never rewritten.
 
-`/atlas:deepen` takes one waypoint at a time and resolves it in conversation. A decision is recorded only with the reason it was made and a human verification stamp, so the agent cannot quietly resolve a waypoint on your behalf. Findings that landed from background agents get swept onto the maps first, and when a subtree goes quiet the session offers to slice its resolved design into issue-sized units. Filing them is left to whatever backlog tool the project uses; the bundle owns the slice and the map slot that records their build order.
+`scripts/lint_bundle.py` enforces the mechanical invariants of both bundle kinds: frontmatter conformance, the human-verified decision rule, map-state integrity, and provenance that resolves. Each skill runs it before committing. It is stdlib-only Python 3 and ships with its own test suite.
 
-`/atlas:document` generates and maintains a `docs/` bundle derived from the code itself. Founding a bundle and updating one are the same invocation: the run reads each concept's recorded commit pin, asks git what has changed since, rewrites the concepts that went stale, regenerates the indexes, and re-checks every concept against source. Prose a human wrote is flagged when the code falsifies it, never rewritten under that human's byline.
-
-`scripts/lint_bundle.py` enforces the mechanical invariants of both bundle kinds — frontmatter conformance, the human-verified decision rule, map-state integrity, provenance that resolves — and each skill runs it before committing. It is stdlib-only Python and ships with its own test suite.
-
-Atlas's deliverable is the bundle. It assumes no issue tracker, no CI system, and no particular way of turning a resolved design into code.
+atlas ends at the bundle. It assumes no issue tracker, no CI system, and no particular way of turning a resolved design into code.
 
 ## review — codebase and documentation review
 
-Review tooling tends to produce either a wall of low-signal lint output or a confident narrative with nothing behind it. `/review:codebase` runs a settled repo through four angles in one parallel wave and fuses the returns into a single ranked report with the raw tool output attached as receipts.
+`/review:codebase` reviews a settled repo (clean tree, no work in flight) through four agents dispatched in one parallel wave, then fuses the returns into a single ranked report with raw tool output attached as evidence:
 
-- `readiness` asks whether the system is deployable and wired at runtime rather than merely component-complete, judged against whatever governing spec surface the repo carries: a spec tree first, scaffold and architecture-decision docs second, the README last. A repo with no spec surface gets told so as a finding.
-- `structure-miner` works four structural lenses (pass-through, reappeared complexity, leaky interface, hypothetical seam), one dispatch per lens, each sweeping the whole repo and citing evidence sites against a pinned commit.
-- `refactor-audit` walks a fixed sequence over deterministic tools: complexity, architecture contracts, dependency shape, duplication, dead code, lint debt, security, history, coverage. It reasons over the raw output instead of summarizing it. The `just` recipe library it drives ships inside the plugin, so a project needs no justfile of its own; the tools themselves must already be installed, and a missing one halts the audit loudly rather than being silently worked around. Python, TypeScript, and Go have modules.
-- `arcc-review` checks the docs for accuracy, relevancy, clarity, and consistency, verifying every claim against the live repo rather than against what the doc sounds like it should say.
+- `readiness` checks whether the system is deployable and wired at runtime, judged against whatever governing spec surface the repo carries (a spec tree, an ADR directory, `DECISIONS.md`), with the README last in authority. A repo with no spec surface gets that reported as a finding.
+- `structure-miner` sweeps the repo once per structural lens (pass-through, reappeared complexity, leaky interface, hypothetical seam), citing evidence sites at a pinned commit.
+- `refactor-audit` runs a fixed sequence of deterministic tools: complexity, architecture contracts, dependency shape, duplication, dead code, lint debt, types, security, history, coverage. The `just` recipe library it drives ships inside the plugin, so the target project needs no justfile of its own. The tools themselves must already be installed; a missing one halts the audit with a report rather than being worked around. Supported languages: Python, TypeScript, Go.
+- `arcc-review` checks documentation for accuracy, relevancy, clarity, and consistency, verifying each claim against the repo rather than taking the doc's word for it.
 
-An angle that cannot run becomes a coverage note and the sweep continues, and the report states what nobody examined. Findings carry severity, evidence sites at the pinned commit, and the first mechanical step. Ones you pick are filed as draft issues through whichever forge CLI the git remote resolves to (`gh`, `fj`, `glab`), and printed for hand-filing when none is installed.
+An angle that cannot run becomes a coverage note, and the report states what nobody examined. Findings the operator selects are filed as draft issues through whichever forge CLI the git remote resolves to (`gh`, `fj`, `glab`), or printed for hand-filing when none is installed.
 
-Two more entry points work on their own. `/review:survey` brings a repo's README, its `CLAUDE.md` files, and the agent's stored memories about the project back in line with what the repo has become. `review:design-adversary` gives a design doc, spec, or plan the least charitable competent reading it can, pinning every finding to quoted text and naming what would refute it, and reporting what held as well as what did not.
+Two more entry points work on their own:
+
+- `/review:survey` brings a repo's README, its `CLAUDE.md` files, and the agent's stored memories about the project back in line with the current state of the repo.
+- `review:design-adversary` is a standalone agent that gives a design doc, spec, or plan an adversarial reading, pins every finding to quoted text, names what would refute it, and reports what held as well as what did not.
 
 ## forgejo — the `fj` skill
 
-`fj` is the CLI for Forgejo and Gitea instances, shaped closely enough like `gh` that most instincts transfer and the ones that do not cost an agent a failed round trip each. The skill is that delta, verified against `fj v0.6.0`: repo-targeting flags where `-R` does not mean what `gh` means by it, `search` in place of the `list` verb, label creation that silently makes a duplicate instead of failing, the bare flags that open `$EDITOR` and hang a non-interactive agent, and the invisible Unicode directional isolates wrapped around every field of `fj` output that break naive parsers. Nothing in it is tied to a particular instance; `-H <host>` covers the cases where `fj` cannot resolve the host from the remote.
+`fj` is the CLI for Forgejo and Gitea instances. It resembles `gh` closely enough that most habits transfer, and this skill documents the differences that matter to an agent, verified against `fj v0.6.0`: repo-targeting flags that behave differently from `gh -R`, `search` in place of the `list` verb, label creation that silently duplicates instead of failing, bare flags that open `$EDITOR` and hang a non-interactive session, and the invisible Unicode directional isolates in `fj` output that break naive parsers. Nothing in it is tied to a particular instance; `-H <host>` covers the cases where `fj` cannot resolve the host from the remote. Requires the `fj` CLI on the PATH.
 
-## How these were built
+## Development
 
-Skills are prompts, and prompts are testable. Each of these was built the same way:
-
-1. Run the task **without** the skill and keep the transcript. That is the baseline, and it is usually better than expected, which is the point.
-2. Write the smallest skill that beats the baseline on the specific thing the baseline got wrong.
-3. Measure against the baseline with subagent A/B runs, then iterate.
-4. Pressure-test the judgment calls: give a fresh agent a plausible reason to rationalize its way around a rule and see whether the rule holds.
-
-The discipline this enforces is subtraction. A skill that does not beat its baseline does not ship, and most of the editing after the first draft removes instructions that turned out to carry no weight. [Anthropic's skill-creator](https://github.com/anthropics/claude-plugins-official) supplies the eval harness; [Superpowers](https://github.com/obra/superpowers) supplies the method for pressure-testing judgment skills.
+Each skill was written against a measured baseline: run the task without the skill, keep the transcript, then iterate the skill until subagent A/B runs beat that baseline, and pressure-test its judgment rules by giving a fresh agent a plausible reason to work around them. [Anthropic's skill-creator](https://github.com/anthropics/claude-plugins-official) supplies the eval harness; [Superpowers](https://github.com/obra/superpowers) supplies the pressure-testing method.
 
 ## Scope
 
-What is here is what I use. What is not here:
-
-- No project scaffolding or environment setup. Those plugins are welded to my own dotfiles and machine layout and would not work for you.
+- No project scaffolding or environment setup. Those plugins depend on my own dotfiles and machine layout, so they are not published.
 - No language servers. Anthropic's official marketplace has good ones.
-- The design records, evaluation workspaces, and issue history live in a private repo. These plugins are the artifact; the reasoning behind each decision is not published.
-- `atlas` ends at the bundle. Turning a resolved design into tracked work, specs, or code is deliberately not part of it.
+- The design records, evaluation workspaces, and issue history live in a private repo; these plugins are the shipped artifact.
 
 ## License
 
-MIT, see `LICENSE`. Vendored reference material under a plugin's `references/` keeps its own license; see that plugin's `NOTICE.md`. `review` bundles the Diátaxis framework under CC-BY-SA 4.0 and one document under MIT, and `atlas` adapts MIT-licensed prior art and an Apache-2.0 format specification.
+MIT, see `LICENSE`. Vendored reference material under a plugin's `references/` keeps its own license: `review` bundles the Diátaxis framework (CC-BY-SA 4.0) and one MIT document, and `atlas` adapts MIT-licensed prior art and an Apache-2.0 format specification. Details in each plugin's `NOTICE.md`.
