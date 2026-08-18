@@ -33,11 +33,11 @@ Record the decision, then say where the build actually lands: a slice in the sub
 
 The bundle never runs out; subtrees do. When the bookkeeping sweep leaves a subtree quiet — empty Frontier, empty Blocked, no fog, in its map and every map beneath it — **proposing the commitment conversation is part of the sweep, not a judgment call.** Name the highest quiet node and propose cutting its issues now. The operator decides: hold the conversation, or park it and keep deepening elsewhere — a parked proposal is re-raised next time the subtree is touched, never queued in a file.
 
-The conversation itself follows the reference's quiet-subtrees section: slice the subtree's design into issues (a quiet subtree cuts alone — it never waits for siblings), the operator rules which are approved and which are drafts, cut them with `dev-tools:fj` linking each to the subtree's map, and write `## Issues cut` into that map — an ordered list, build order, the one home of cross-issue ordering.
+The conversation itself follows the reference's quiet-subtrees section: slice the subtree's design into issues (a quiet subtree cuts alone — it never waits for siblings), and the operator rules which slices are committed work and which are drafts. Filing them, and writing `## Issues cut` back into the map, is the backlog tool's job, not the bundle's — the map owns that section's format and is the one home of cross-issue ordering.
 
 Two failure modes, both fatal to the doctrine:
 
 | Pull | Reality |
 |---|---|
 | "The whole bundle isn't done, so it's too early to cut issues" | The whole bundle is never done. Quiet is evaluated per subtree; waiting for the tree is waiting forever, and the bundle becomes the place design goes to continue forever. |
-| "It went quiet, so I'll cut the issues" | Quiet triggers the *proposal*, nothing else. Promotion is joint, per backlog doctrine — cutting without the commitment conversation assumes the operator's yes. |
+| "It went quiet, so the slicing is settled" | Quiet triggers the *proposal*, nothing else. Which slices are committed work is the operator's call, made in the conversation — assuming it from quietness assumes the operator's yes. |

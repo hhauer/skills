@@ -1,6 +1,6 @@
 # Wayfinding: the design bundle and its discipline
 
-Shared contract for `/atlas:widen` and `/atlas:deepen` — the pre-spec design phase. A project's design intent lives in one permanent **knowledge bundle**: a corpus of markdown maps and waypoints at `design/`, on main, conforming to the [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/3fcbb9f828c2f23d109c855ee403c3a4c81f3a96/okf/SPEC.md). A widening session fans out breadth-first over one region, producing waypoints and fog, resolving nothing. A deepening session resolves one waypoint depth-first, with the operator. Both are map operations on the same bundle; neither opens an effort and neither concludes one. Quiet regions slice into backlog issues and feed `the project's spec pipeline`; nothing is built from the bundle directly.
+Shared contract for `/atlas:widen` and `/atlas:deepen` — the pre-spec design phase. A project's design intent lives in one permanent **knowledge bundle**: a corpus of markdown maps and waypoints at `design/`, on main, conforming to the [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/3fcbb9f828c2f23d109c855ee403c3a4c81f3a96/okf/SPEC.md). A widening session fans out breadth-first over one region, producing waypoints and fog, resolving nothing. A deepening session resolves one waypoint depth-first, with the operator. Both are map operations on the same bundle; neither opens an effort and neither concludes one. Quiet regions slice into backlog issues; nothing is built from the bundle directly.
 
 ## The bundle
 
@@ -205,8 +205,8 @@ When bookkeeping finds a quiet subtree, **propose the commitment conversation th
 The commitment conversation, when the operator takes it:
 
 1. **Slice.** Propose how the subtree's resolved design divides into backlog issues — how many changes, what order, what depends on what. A quiet subtree cuts alone; it never waits for siblings.
-2. **Promote.** Which slices are committed work (`state/approved` + `flow/*` lane) and which are drafts is the operator's call, made here, per the backlog doctrine — never assumed from quietness.
-3. **Cut** the issues with the `dev-tools:fj` skill. Each issue body links the subtree's map by path so later spec-writing sessions mine the bundle.
-4. **Record.** Write `## Issues cut` into the subtree's map: an ordered list — build order — of issue links with one-line gists. Ordering lives here and only here; Forgejo cannot express cross-issue dependency, so the map is its one home.
+2. **Promote.** Which slices are committed work and which are drafts is the operator's call, made here — never assumed from quietness.
+
+**The bundle's part ends there.** Filing the issues, and writing the map's `## Issues cut` section afterward, belong to whatever backlog tool the project uses — the bundle owns the slice and the slot, not the filing. The slot's contract holds regardless of who writes it: an ordered list, in build order, of issue links with one-line gists. **Cross-issue ordering lives in that section and nowhere else**, because issue trackers generally cannot express dependency between issues; a map that omits the order loses it for good.
 
 The arrow runs one way: **bundle → issues → propose**. Backlog issues are never an input to a widening, and design work is never filed as an issue. There is no back-feed from implementation either — when building collides with reality, the next widening's fan-out reads the specs and code like any other part of the environment and re-fogs what changed. A cut subtree that later reopens is just a subtree with new fog; the bundle is mutable.
