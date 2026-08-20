@@ -21,8 +21,9 @@ mode — the state of the bundle and the git history decide what the run does.
 
 Truth discipline: every claim derives from the code as it exists right now.
 Read the source, not the README's opinion of the source. Where surfaces
-disagree (README vs code, spec vs code), the bundle follows the code and
-records the divergence — disagreement is a finding, not a thing to smooth over.
+disagree (README vs code, spec vs code, even the project's own CLAUDE.md vs
+code), the bundle follows the code and records the divergence — disagreement
+is a finding, not a thing to smooth over.
 
 ## Ownership: who may rewrite a concept
 
@@ -115,12 +116,20 @@ changes who executes them, never what is done.
    than letting it wait for the backstop. Then fan out `atlas:verifier` — one
    dispatch per concept, every concept, every run: the stamps are what make
    the bundle trustable, so this phase is not optional even when nothing else
-   changed. Route each failure report back to a fresh scribe dispatch and
-   re-verify the rewrite; human-authored staleness flags go into the run
-   report for the author (a human concept's `unknown-symbol` finding is a
-   warning feeding that same flag, never an edit). Then run the same lint
-   again as the final backstop: it must exit 0 (skip only if the script is
-   genuinely unavailable, and say so in the report).
+   changed. Name in each dispatch any surface the run itself migrated or
+   rewrote (a slimmed README, a deleted helper index): the verifier resolves
+   claims about those against the concept's pin, and without the list it
+   reads working-tree absence as falsehood. Keep a **dispatch ledger** —
+   concept, dispatch, report received — because a dispatch can fail silently
+   at the platform's concurrency cap. Route each failure report back to a
+   fresh scribe dispatch and re-verify the rewrite; human-authored staleness
+   flags go into the run report for the author (a human concept's
+   `unknown-symbol` finding is a warning feeding that same flag, never an
+   edit). Before the final lint, audit stamp coverage against the concept
+   list: every concept carries either a new `verified` event or an explained
+   failure — re-dispatch any gap. Then run the same lint again as the final
+   backstop: it must exit 0 (skip only if the script is genuinely
+   unavailable, and say so in the report).
 
 ## Bundle mechanics (OKF v0.2, the load-bearing subset)
 
@@ -155,6 +164,11 @@ Only on a run that creates the bundle:
   CLAUDE.md line pointing at `docs/index.md` ("before writing a helper,
   check `docs/index.md`"). Add it unless constrained to touch only `docs/`;
   then propose it in the report.
+- **Cost.** A founding run is heavy: roughly two dispatches per concept plus
+  fix waves — the reference founding (47 concepts over ~29k lines) took ~90
+  dispatches. Say so before starting if the operator invoked casually.
+  Convergent later runs are far cheaper: git-scoped, with most concepts
+  verify-and-stamp only.
 
 ## The run report
 

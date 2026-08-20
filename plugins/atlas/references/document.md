@@ -130,6 +130,20 @@ here, unlike the design bundle's stateful maps, because everything they
 enumerate is recoverable from the concepts themselves. Take timestamps from
 `date -u +%Y-%m-%dT%H:%M:%SZ`, never from memory.
 
+## Findings are a second product
+
+A finding about the code — a defect, a stale docstring, a spec/code
+disagreement noticed while documenting — is recorded once, in the nearest
+owning concept; any other concept that needs it points there. Two
+independent records of one defect desync the first time one is edited: the
+same one-rule-one-owner failure the spec corpus guards against.
+
+And a verified bundle is more than documentation: the verify phase's failed
+claims are findings about the *code*, not just the docs. A run that makes
+`docs/` true has also audited the system it documents — surface those
+findings in the run report for routing to the repo's backlog, as a product
+of the run rather than noise on the way to one.
+
 ## The run architecture
 
 The operation is one convergent verb — make `docs/` true of the code as it

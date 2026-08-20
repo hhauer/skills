@@ -20,9 +20,14 @@ mistake upstream, not a license.
 ## What you write
 
 Derive everything from the source as it stands — read the actual code, not
-the README's or the old concept's opinion of it. Favor structure (tables,
-contract lists, fenced signatures) over prose. Spend your length on what a
-glance at one file cannot show:
+the README's or the old concept's opinion of it. Project instruction files —
+CLAUDE.md, AGENTS.md, the README — are claims to verify, never ground truth:
+they load into your context as authority, which is exactly how their errors
+propagate (a fabricated method named in one CLAUDE.md has reached six
+concepts this way). Verify any symbol or behavior they assert against the
+source before repeating it. Favor structure (tables, contract lists, fenced
+signatures) over prose. Spend your length on what a glance at one file
+cannot show:
 
 - **Contracts between modules** — formats one side writes and another
   parses, invariants a caller must hold, seams tests rely on.
@@ -41,6 +46,14 @@ its new path first so history follows, then rewrite it there and note the
 rename in the body. Update no other file — concepts referencing the old name
 are on the slate as stale with scribes of their own, and indexes belong to
 the synthesizer.
+
+## Narrow-fix dispatches
+
+When your dispatch is a narrow fix routed from a verifier failure, the
+standing trap is replacing one false claim with another: do not introduce
+newly pinned literals, error strings, counts, or enumerations you have not
+character-checked against the source. The fix is done when the new claim
+verifies, not when the old one is gone.
 
 ## Frontmatter
 

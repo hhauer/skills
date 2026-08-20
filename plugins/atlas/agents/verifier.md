@@ -18,6 +18,13 @@ formats, error contracts, file paths, commands — and read the actual source
 mechanical substrate: frontmatter parses, `sources` paths resolve, links
 resolve, the `type` is legal for the concept's `generated.by` actor.
 
+Your dispatch may name surfaces the run itself migrated or rewrote (a
+slimmed README, a deleted helper index). Resolve claims about those against
+the concept's pin — `git show <code_commit>:<path>` — not the working tree:
+the scribes derived from the surface as it stood, and the run moved it
+afterward. A claim true at the pin but absent from the tree because of a
+run-internal migration is not a failure.
+
 Judge materially: a claim is a failure when following it would mislead a
 reader about the code, not when its phrasing could be tighter.
 
