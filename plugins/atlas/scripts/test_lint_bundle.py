@@ -624,6 +624,10 @@ Hand-authored operating advice.
 
 
 class DocsFixtureBase(FixtureBase):
+    # These fixtures write no files outside docs/, so the symbol-existence
+    # corpus is empty and that check stands down. A test that adds any
+    # non-prose file under self.root brings the check to life — VALID_DOCS_MODULE
+    # mentions `save()` and `load()`, which would then need to exist.
     def setUp(self) -> None:
         super().setUp()
         self.bundle = self.root / "docs"
@@ -886,8 +890,129 @@ class TestSymbolExistence(SymbolFixtureBase):
         self.assertIn("unknown-symbol", self.rules(self.errors(findings)))
 
     def test_symbol_in_fenced_code_block_not_checked(self) -> None:
+        # The fenced content must itself carry an inline-backticked span —
+        # a bare `Daemon.start()` line would pass even without fence handling.
         self.write_src()
-        self.write_concept("```python\nDaemon.start()\n```\n")
+        self.write_concept("```markdown\nBoot with `Daemon.start()`.\n```\n")
+        self.assertEqual(self.docs_findings(), [])
+
+    def test_symbol_in_nested_fence_not_checked(self) -> None:
+        # A four-backtick fence wrapping a three-backtick example: the inner
+        # run must not close the outer fence.
+        self.write_src()
+        self.write_concept(
+            "````markdown\n```\nBoot with `Daemon.start()`.\n```\n````\n")
+        self.assertEqual(self.docs_findings(), [])
+
+    def test_symbol_in_tilde_fence_not_checked(self) -> None:
+        self.write_src()
+        self.write_concept("~~~\nBoot with `Daemon.start()`.\n~~~\n")
+        self.assertEqual(self.docs_findings(), [])
+
+    def test_inherited_member_passes(self) -> None:
+        self.write_src(content=DAEMON_SRC + "\nclass Worker(Daemon):\n    pass\n")
+        self.write_concept("Boot with `Worker.startup()`.\n")
+        self.assertEqual(self.docs_findings(), [])
+
+    def test_unresolvable_base_falls_back_to_text(self) -> None:
+        # Client inherits from an external SDK class: the index cannot claim
+        # authority over its members, so the text corpus decides.
+        self.write_src(content=DAEMON_SRC
+                       + "\nclass Client(RemoteBase):\n    pass\n# send a request\n")
+        self.write_concept("Call `Client.request()`.\n")
+        self.assertEqual(self.docs_findings(), [])
+
+    def test_unresolvable_base_with_no_text_match_is_error(self) -> None:
+        self.write_src(content=DAEMON_SRC + "\nclass Client(RemoteBase):\n    pass\n")
+        self.write_concept("Call `Client.zz_nowhere()`.\n")
+        findings = self.docs_findings()
+        self.assertIn("unknown-symbol", self.rules(self.errors(findings)))
+
+    def test_uppercase_markdown_is_not_source(self) -> None:
+        self.write_src()
+        (self.root / "CLAUDE.MD").write_text("Uses `_special_helper` heavily.\n")
+        self.write_concept("Handled by `_special_helper`.\n")
+        findings = self.docs_findings()
+        self.assertIn("unknown-symbol", self.rules(self.errors(findings)))
+
+    def test_rst_is_not_source(self) -> None:
+        self.write_src()
+        (self.root / "docs-old.rst").write_text("Uses `_special_helper` heavily.\n")
+        self.write_concept("Handled by `_special_helper`.\n")
+        findings = self.docs_findings()
+        self.assertIn("unknown-symbol", self.rules(self.errors(findings)))
+
+    def test_empty_source_file_still_enables_check(self) -> None:
+        # Stand-down keys on "no source files", not "no source bytes".
+        self.write_src(content="")
+        self.write_concept("Then `frobnicate()` runs.\n")
+        findings = self.docs_findings()
+        self.assertIn("unknown-symbol", self.rules(self.errors(findings)))
+
+    def test_waiver_reason_after_plain_hyphen_is_not_waived(self) -> None:
+        # Token collection stops at the first non-symbol-shaped word, so a
+        # reason clause cannot silently waive symbols it happens to mention.
+        self.write_src()
+        self.write_concept(
+            "Emits `_complete`; then `frobnicate()` runs.\n\n"
+            "<!-- symbols-ok: _complete - real entry is frobnicate() -->\n")
+        findings = self.docs_findings()
+        errors = self.errors(findings)
+        self.assertIn("unknown-symbol", self.rules(errors))
+        self.assertIn("frobnicate", errors[0].message)
+
+    def test_null_byte_python_file_does_not_crash(self) -> None:
+        self.write_src()
+        self.write_src(rel="src/bad.py", content="x = 1\n\x00")
+        self.write_concept("Boot with `Daemon.startup()`.\n")
+        self.assertEqual(self.docs_findings(), [])
+
+    def test_oversized_file_is_not_corpus(self) -> None:
+        self.write_src()
+        self.write_src(rel="src/huge.py",
+                       content="def frobnicate(): pass\n# " + "x" * 1_100_000 + "\n")
+        self.write_concept("Then `frobnicate()` runs.\n")
+        findings = self.docs_findings()
+        self.assertIn("unknown-symbol", self.rules(self.errors(findings)))
+
+    def test_unreadable_source_file_is_warned_about(self) -> None:
+        self.write_src()
+        secret = self.root / "src" / "secret.py"
+        secret.write_text("def frobnicate(): pass\n")
+        secret.chmod(0)
+        self.addCleanup(secret.chmod, 0o644)
+        try:
+            secret.read_text()
+        except PermissionError:
+            pass
+        else:
+            self.skipTest("running with permissions that ignore chmod 0")
+        self.write_concept("Boot with `Daemon.startup()`.\n")
+        findings = self.docs_findings()
+        self.assertIn("unreadable-source", self.rules(self.warnings(findings)))
+
+    def test_root_dotfile_is_not_corpus(self) -> None:
+        self.write_src()
+        (self.root / ".envrc").write_text("frobnicate\n")
+        self.write_concept("Then `frobnicate()` runs.\n")
+        findings = self.docs_findings()
+        self.assertIn("unknown-symbol", self.rules(self.errors(findings)))
+
+    def test_symlinked_file_is_not_corpus(self) -> None:
+        self.write_src()
+        outside = self.root.parent / f"{self.root.name}-linked-source"
+        outside.write_text("def frobnicate(): pass\n")
+        self.addCleanup(outside.unlink, missing_ok=True)
+        extra = self.root / "extra"
+        extra.mkdir()
+        (extra / "linked.py").symlink_to(outside)
+        self.write_concept("Then `frobnicate()` runs.\n")
+        findings = self.docs_findings()
+        self.assertIn("unknown-symbol", self.rules(self.errors(findings)))
+
+    def test_foreign_extension_filename_not_a_symbol(self) -> None:
+        self.write_src()
+        self.write_concept("The parser lives in `handler.rb`.\n")
         self.assertEqual(self.docs_findings(), [])
 
     def test_filename_in_backticks_not_a_symbol(self) -> None:

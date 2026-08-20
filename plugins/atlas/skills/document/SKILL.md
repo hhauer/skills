@@ -110,7 +110,9 @@ changes who executes them, never what is done.
    caught before a single verifier is spent — route each to a fix scribe, or
    waive it in place (`<!-- symbols-ok: <sym> — reason -->`) when the mention
    is deliberate: abbreviation shorthand, a "there is no X" note, a wire-schema
-   name that collides with a class. Then fan out `atlas:verifier` — one
+   name that collides with a class. Any other error the pre-pass surfaces is a
+   real bundle defect at this point in the run — route it the same way rather
+   than letting it wait for the backstop. Then fan out `atlas:verifier` — one
    dispatch per concept, every concept, every run: the stamps are what make
    the bundle trustable, so this phase is not optional even when nothing else
    changed. Route each failure report back to a fresh scribe dispatch and

@@ -77,20 +77,33 @@ SYMBOL_PRIVATE_RE = re.compile(r"^_[A-Za-z][A-Za-z0-9_]*(\(\))?$")
 SYMBOLS_OK_RE = re.compile(r"<!--\s*symbols-ok:(.*?)-->", re.DOTALL)
 SYMBOL_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_.]*(?:\(\))?")
 # Backticked spans that look dotted but are files or hosts, not code symbols.
+# Skipping here only suppresses a finding, so the list errs generous.
 NON_SYMBOL_EXTS = {
-    "cfg", "css", "csv", "env", "example", "gif", "html", "ini", "ipynb",
-    "jpeg", "jpg", "js", "json", "jsonl", "lock", "md", "mjs", "png", "py",
-    "sh", "sql", "svg", "toml", "ts", "tsx", "txt", "xml", "yaml", "yml",
+    "adoc", "bash", "bat", "c", "cfg", "clj", "conf", "cpp", "cs", "css",
+    "csv", "dart", "env", "erl", "ex", "example", "exs", "gif", "go",
+    "gradle", "graphql", "h", "hcl", "hpp", "hs", "html", "ini", "ipynb",
+    "java", "jl", "jpeg", "jpg", "js", "json", "jsonl", "jsx", "kt", "lock",
+    "lua", "m", "md", "mjs", "mm", "mod", "nim", "php", "pl", "png",
+    "proto", "ps1", "py", "r", "rb", "rs", "rst", "scala", "service", "sh",
+    "sql", "sum", "svelte", "svg", "swift", "tf", "tmpl", "toml", "ts",
+    "tsx", "txt", "vue", "xml", "yaml", "yml", "zig", "zsh",
 }
 HOSTNAME_TLDS = {
     "com", "dev", "edu", "example", "gov", "internal", "io", "local",
     "net", "org", "test",
 }
-SOURCE_SKIP_DIRS = {"node_modules", "__pycache__", ".venv", "venv"}
+SOURCE_SKIP_DIRS = {
+    "node_modules", "__pycache__", ".venv", "venv",
+    "build", "dist", "target", "vendor",
+}
 SOURCE_SKIP_EXTS = {
     ".gif", ".gz", ".ico", ".jpeg", ".jpg", ".lock", ".pdf", ".png",
     ".svg", ".tar", ".webp", ".woff", ".woff2", ".zip",
 }
+# Prose formats are claims about the code, never definitions of it.
+PROSE_EXTS = {".md", ".markdown", ".rst", ".adoc"}
+MAX_SOURCE_FILE_BYTES = 1_000_000
+FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 
 KEY_RE = re.compile(r"^([A-Za-z0-9_-]+):\s*(.*)$")
 SECTION_RE = re.compile(r"^##\s+(.+?)\s*$")
@@ -266,13 +279,25 @@ def strip_code(text: str) -> str:
 
 
 def fence_free_lines(lines: list[str], start: int):
-    """Yield (lineno, raw) for lines outside fenced code blocks."""
-    in_fence = False
+    """Yield (lineno, raw) for lines outside fenced code blocks.
+
+    Fences open on a run of 3+ backticks or tildes and close only on a run of
+    the same character at least as long (so nested shorter fences stay
+    inside). Per CommonMark, an unclosed fence runs to end of body.
+    """
+    fence: tuple[str, int] | None = None
     for lineno, raw in enumerate(lines, start=start):
-        if raw.lstrip().startswith("```"):
-            in_fence = not in_fence
-            continue
-        if not in_fence:
+        match = FENCE_RE.match(raw)
+        if match:
+            run = match.group(1)
+            if fence is None:
+                fence = (run[0], len(run))
+                continue
+            if run[0] == fence[0] and len(run) >= fence[1] \
+                    and not raw.strip().strip(run[0]):
+                fence = None
+                continue
+        if fence is None:
             yield lineno, raw
 
 
@@ -285,30 +310,41 @@ def code_free_lines(lines: list[str], start: int):
 class SourceCorpus:
     """Symbol-existence oracle over the repo a docs bundle documents.
 
-    Two views of the same tree: the text of every non-markdown source file
-    (word-boundary existence for any name), and a class -> members map built
-    with stdlib ast from the Python files (strict membership for dotted names
-    whose head is a repo-defined class — the check a text search cannot make).
+    Two views of the same tree: the text of every source file (word-boundary
+    existence for any name), and a class -> members map built with stdlib ast
+    from the Python files (strict membership for dotted names whose head is a
+    repo-defined class — the check a text search cannot make). Excluded from
+    the corpus: the bundle itself, prose formats (docs are claims, not
+    definitions), dot-paths, dependency/build directories, symlinks,
+    binaries, and files over 1 MB.
     """
 
     def __init__(self, repo: Path, bundle: Path) -> None:
-        self.classes: dict[str, set[str]] = {}
+        self._members: dict[str, set[str]] = {}
+        self._bases: dict[str, list[str]] = {}
         self._name_cache: dict[str, bool] = {}
+        self.files = 0
+        self.unreadable: list[Path] = []
         texts: list[str] = []
         for path in sorted(repo.rglob("*")):
-            if not path.is_file() or path.suffix.lower() in SOURCE_SKIP_EXTS \
-                    or path.suffix == ".md":
+            if not path.is_file() or path.is_symlink() \
+                    or path.suffix.lower() in SOURCE_SKIP_EXTS \
+                    or path.suffix.lower() in PROSE_EXTS:
                 continue
             # Classify by the unresolved path: rglob results always sit under
             # repo, while resolving can follow a symlink out of it entirely.
             rel_parts = path.relative_to(repo).parts
             if path.is_relative_to(bundle) \
-                    or any(p.startswith(".") or p in SOURCE_SKIP_DIRS for p in rel_parts[:-1]):
+                    or any(p.startswith(".") or p in SOURCE_SKIP_DIRS for p in rel_parts):
                 continue
             try:
-                text = path.read_text()
-            except (UnicodeDecodeError, OSError):
+                if path.stat().st_size > MAX_SOURCE_FILE_BYTES:
+                    continue
+                text = path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                self.unreadable.append(path)
                 continue
+            self.files += 1
             texts.append(text)
             if path.suffix == ".py":
                 self._index_python(text)
@@ -316,17 +352,25 @@ class SourceCorpus:
 
     @property
     def empty(self) -> bool:
-        return not self.text
+        return self.files == 0
 
     def _index_python(self, text: str) -> None:
         try:
             tree = ast.parse(text)
-        except SyntaxError:
+        except (SyntaxError, ValueError, RecursionError):
             return
         for node in ast.walk(tree):
             if not isinstance(node, ast.ClassDef):
                 continue
-            members = self.classes.setdefault(node.name, set())
+            members = self._members.setdefault(node.name, set())
+            bases = self._bases.setdefault(node.name, [])
+            for base in node.bases:
+                if isinstance(base, ast.Name):
+                    bases.append(base.id)
+                elif isinstance(base, ast.Attribute):
+                    bases.append(base.attr)
+                else:
+                    bases.append("?")  # subscripted/dynamic base: unresolvable
             for child in node.body:
                 if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     members.add(child.name)
@@ -339,6 +383,29 @@ class SourceCorpus:
                 if isinstance(sub, ast.Attribute) and isinstance(sub.ctx, ast.Store) \
                         and isinstance(sub.value, ast.Name) and sub.value.id == "self":
                     members.add(sub.attr)
+
+    def class_members(self, name: str) -> tuple[set[str], bool] | None:
+        """Resolve a repo-defined class's members through its repo-defined
+        bases. `complete` is False when any base (transitively) is not defined
+        in the repo, so the index cannot claim authority over what the class
+        inherits. None: not a repo class at all.
+        """
+        if name not in self._members:
+            return None
+        members: set[str] = set()
+        complete = True
+        stack, seen = [name], set()
+        while stack:
+            cls = stack.pop()
+            if cls in seen or cls == "object":
+                continue
+            seen.add(cls)
+            if cls not in self._members:
+                complete = False
+                continue
+            members |= self._members[cls]
+            stack.extend(self._bases.get(cls, []))
+        return members, complete
 
     def has_name(self, name: str) -> bool:
         if name not in self._name_cache:
@@ -365,11 +432,18 @@ def symbol_candidate(span: str) -> str | None:
 
 
 def symbol_waivers(body: list[str]) -> set[str]:
-    """Collect symbols waived via `<!-- symbols-ok: <sym> <sym> — reason -->`."""
+    """Collect symbols waived via `<!-- symbols-ok: <sym> <sym> — reason -->`.
+
+    Collection stops at the first token that is not symbol-shaped, so a
+    reason clause can never silently waive symbols it happens to mention.
+    """
     waived: set[str] = set()
     for match in SYMBOLS_OK_RE.finditer("\n".join(body)):
         listing = re.split(r"—|--", match.group(1), maxsplit=1)[0]
-        waived.update(t.removesuffix("()") for t in SYMBOL_TOKEN_RE.findall(listing))
+        for token in SYMBOL_TOKEN_RE.findall(listing):
+            if symbol_candidate(token) is None:
+                break
+            waived.add(token.removesuffix("()"))
     return waived
 
 
@@ -394,6 +468,11 @@ class BundleLinter:
     def run(self) -> list[Finding]:
         if self.kind == "docs":
             self.corpus = SourceCorpus(self.bundle.parent, self.bundle)
+            for skipped in self.corpus.unreadable:
+                self.warning(skipped, 1, "unreadable-source",
+                             "source file could not be read, so it is missing from the "
+                             "symbol-existence corpus — unknown-symbol findings may be "
+                             "false until it is readable.")
         root_index = self.bundle / "index.md"
         if not root_index.is_file():
             self.error(root_index, 1, "missing-index",
@@ -604,11 +683,16 @@ class BundleLinter:
                 if symbol is None or symbol in waived or symbol in reported:
                     continue
                 parts = symbol.split(".")
-                members = self.corpus.classes.get(parts[0]) if len(parts) > 1 else None
-                if members is not None:
+                resolved = self.corpus.class_members(parts[0]) if len(parts) > 1 else None
+                if resolved is not None:
+                    members, complete = resolved
                     # Only the immediate member is statically checkable: in
                     # `A.b.c`, `c` belongs to whatever `b` is, not to `A`.
                     if parts[1] in members:
+                        continue
+                    # A class with a base outside the repo may inherit members
+                    # the index cannot see: the text corpus decides instead.
+                    if not complete and self.corpus.has_name(parts[1]):
                         continue
                     detail = f"class `{parts[0]}` defines no member `{parts[1]}`"
                 else:
