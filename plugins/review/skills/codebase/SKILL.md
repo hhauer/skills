@@ -67,9 +67,9 @@ git remote get-url origin
 |---|---|---|
 | `github.com` | `gh` | `gh issue create --title "<title>" --body-file <path>` |
 | any Forgejo or Gitea host | `fj` | `fj issue create -H <host> "<title>" --body-file <path>` |
-| `gitlab.com` or a self-hosted GitLab | `glab` | `glab issue create --title "<title>" --description-file <path>` |
+| `gitlab.com` or a self-hosted GitLab | `glab` | `glab issue create -y --title "<title>" --description-file <path>` |
 
-Exact-match `github.com` and `gitlab.com` against the remote host. **Any other host is self-hosted, and the hostname alone cannot tell you which forge software it runs** — Forgejo, Gitea, and GitLab all live on arbitrary domains. Resolve it by evidence rather than by guessing: check which of `fj`, `glab`, and `gh` are installed, and where that is not decisive, ask the operator which forge the host runs. Confirm before filing; never file into a guess.
+glab's `-y` is load-bearing: without it, glab prompts for confirmation to submit, which blocks a non-TTY shell. Exact-match `github.com` and `gitlab.com` against the remote host. **Any other host is self-hosted, and the hostname alone cannot tell you which forge software it runs** — Forgejo, Gitea, and GitLab all live on arbitrary domains. Resolve it by evidence rather than by guessing: check which of `fj`, `glab`, and `gh` are installed, and where that is not decisive, ask the operator which forge the host runs. Confirm before filing; never file into a guess.
 
 Then check that the CLI the table selected actually resolves — `command -v` that specific binary — before the first call. A missing binary is the fallback case below, not an error.
 

@@ -13,6 +13,10 @@ tpl := justfile_directory() + "/templates"
 # Go itself is project-pinned via mise, so every go invocation in
 # this module goes through `mise exec --` — bare `go` breaks in any shell that
 # hasn't run `mise activate`, which includes agent-run recipes.
+# Preflight probes `mise which` before any `mise exec`: its error names the
+# exact failure — "not a mise bin" (never installed) vs "not currently active"
+# (installed, but this repo carries no mise pin; remediation `mise use`) —
+# where a bare `mise exec` failure would not distinguish the two.
 # gocyclo/gocognit are probed with a plain path run: both exit 2 on -h (flag
 # usage convention) but exit 0 on a real run without -over, findings or not.
 # Verify global + project-pinned tools (via go tool directives + mise).
@@ -28,6 +32,8 @@ preflight:
     @git --version
     @echo ""
     @echo "--- Project (via mise) ---"
+    @mise which go
+    @mise which golangci-lint
     @mise exec -- go version
     @mise exec -- golangci-lint --version
     @echo ""
