@@ -23,7 +23,7 @@ Review a settled codebase from every angle at once and fuse the results into one
 
 ## Dispatch
 
-One parallel wave — all seven Agent calls in a single message:
+One parallel wave — all seven Agent calls in a single message, every one a plain **unnamed** background dispatch (never pass `name`: each report is the dispatch's return value, and a named dispatch silently loses it):
 
 | # | Agent | Brief carries |
 |---|---|---|
