@@ -73,6 +73,9 @@ You are the thin coordinator. The work is carried by four dedicated agents —
 `atlas:enumerator`, `atlas:scribe`, `atlas:synthesizer`, `atlas:verifier` —
 each with its own operating contract in its agent file. You dispatch them,
 route their reports, and hold the conversations that belong to the operator.
+Every dispatch is a plain **unnamed** background Agent call — never pass
+`name`: each agent's report is its dispatch's return value, and a named
+(teammate) dispatch silently loses it.
 You never do a phase's work inline while its agent is available: consistent
 behavior at any scale comes from every slice of work running under the same
 written brief, not from whatever a single context improvises.
