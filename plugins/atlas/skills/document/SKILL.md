@@ -104,15 +104,21 @@ changes who executes them, never what is done.
 4. **Synthesize.** When the scribes land, dispatch `atlas:synthesizer` with
    the run summary. It regenerates every index and writes the dated `log.md`
    entry.
-5. **Verify.** Fan out `atlas:verifier` — one dispatch per concept, every
-   concept, every run: the stamps are what make the bundle trustable, so
-   this phase is not optional even when nothing else changed. Route each
-   failure report back to a fresh scribe dispatch and re-verify the rewrite;
-   human-authored staleness flags go into the run report for the author.
-   Then run the deterministic backstop yourself:
-   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lint_bundle.py" --kind docs docs/`
-   must exit 0 (skip only if the script is genuinely unavailable, and say so
-   in the report).
+5. **Verify.** Run the deterministic pre-pass first:
+   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lint_bundle.py" --kind docs docs/`.
+   Its `unknown-symbol` findings are fabricated, renamed, or drifted symbols
+   caught before a single verifier is spent — route each to a fix scribe, or
+   waive it in place (`<!-- symbols-ok: <sym> — reason -->`) when the mention
+   is deliberate: abbreviation shorthand, a "there is no X" note, a wire-schema
+   name that collides with a class. Then fan out `atlas:verifier` — one
+   dispatch per concept, every concept, every run: the stamps are what make
+   the bundle trustable, so this phase is not optional even when nothing else
+   changed. Route each failure report back to a fresh scribe dispatch and
+   re-verify the rewrite; human-authored staleness flags go into the run
+   report for the author (a human concept's `unknown-symbol` finding is a
+   warning feeding that same flag, never an edit). Then run the same lint
+   again as the final backstop: it must exit 0 (skip only if the script is
+   genuinely unavailable, and say so in the report).
 
 ## Bundle mechanics (OKF v0.2, the load-bearing subset)
 

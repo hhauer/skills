@@ -34,11 +34,22 @@ and /atlas:deepen):
   - log.md is allowed (it is the bundle's update history); its `##` headings
     must be ISO dates and it carries no frontmatter. No map machinery.
   - Broken links are warnings only (OKF consumers tolerate them).
+  - Symbol existence: backticked code symbols in concept bodies (`A.b()`,
+    `f()`, `_private`) must exist in the repo the bundle documents — the
+    source root is the bundle's parent. Dotted names whose head is a
+    repo-defined Python class are checked by class membership (stdlib ast);
+    everything else by word-boundary search over non-markdown source files.
+    Errors on machine-authored concepts, warnings on human-authored ones
+    (their fix path is flag-don't-fix). Deliberate mentions of nonexistent
+    symbols (shorthand, "there is no X" notes) are waived in place:
+    `<!-- symbols-ok: <sym> <sym> — reason -->`. The check stands down when
+    the repo has no source files at all.
 
 Exit status: 0 if no errors (warnings allowed), 1 if any errors, 2 on usage.
 """
 from __future__ import annotations
 
+import ast
 import enum
 import re
 import sys
@@ -58,6 +69,28 @@ MAP_SECTIONS = {
 BARE_LINK_SECTIONS = {"Regions", "Frontier"}
 ANNOTATED_LINK_SECTIONS = {"Blocked", "Decisions so far"}
 STATE_SECTIONS = BARE_LINK_SECTIONS | ANNOTATED_LINK_SECTIONS
+
+INLINE_CODE_RE = re.compile(r"`([^`]+)`")
+SYMBOL_DOTTED_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+(\(\))?$")
+SYMBOL_CALL_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\(\)$")
+SYMBOL_PRIVATE_RE = re.compile(r"^_[A-Za-z][A-Za-z0-9_]*(\(\))?$")
+SYMBOLS_OK_RE = re.compile(r"<!--\s*symbols-ok:(.*?)-->", re.DOTALL)
+SYMBOL_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_.]*(?:\(\))?")
+# Backticked spans that look dotted but are files or hosts, not code symbols.
+NON_SYMBOL_EXTS = {
+    "cfg", "css", "csv", "env", "example", "gif", "html", "ini", "ipynb",
+    "jpeg", "jpg", "js", "json", "jsonl", "lock", "md", "mjs", "png", "py",
+    "sh", "sql", "svg", "toml", "ts", "tsx", "txt", "xml", "yaml", "yml",
+}
+HOSTNAME_TLDS = {
+    "com", "dev", "edu", "example", "gov", "internal", "io", "local",
+    "net", "org", "test",
+}
+SOURCE_SKIP_DIRS = {"node_modules", "__pycache__", ".venv", "venv"}
+SOURCE_SKIP_EXTS = {
+    ".gif", ".gz", ".ico", ".jpeg", ".jpg", ".lock", ".pdf", ".png",
+    ".svg", ".tar", ".webp", ".woff", ".woff2", ".zip",
+}
 
 KEY_RE = re.compile(r"^([A-Za-z0-9_-]+):\s*(.*)$")
 SECTION_RE = re.compile(r"^##\s+(.+?)\s*$")
@@ -232,10 +265,119 @@ def strip_code(text: str) -> str:
     return re.sub(r"`[^`]*`", "", "\n".join(lines))
 
 
+def fence_free_lines(lines: list[str], start: int):
+    """Yield (lineno, raw) for lines outside fenced code blocks."""
+    in_fence = False
+    for lineno, raw in enumerate(lines, start=start):
+        if raw.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            yield lineno, raw
+
+
+def code_free_lines(lines: list[str], start: int):
+    """Yield (lineno, line) outside fences, with inline code spans removed."""
+    for lineno, raw in fence_free_lines(lines, start):
+        yield lineno, re.sub(r"`[^`]*`", "", raw)
+
+
+class SourceCorpus:
+    """Symbol-existence oracle over the repo a docs bundle documents.
+
+    Two views of the same tree: the text of every non-markdown source file
+    (word-boundary existence for any name), and a class -> members map built
+    with stdlib ast from the Python files (strict membership for dotted names
+    whose head is a repo-defined class — the check a text search cannot make).
+    """
+
+    def __init__(self, repo: Path, bundle: Path) -> None:
+        self.classes: dict[str, set[str]] = {}
+        self._name_cache: dict[str, bool] = {}
+        texts: list[str] = []
+        for path in sorted(repo.rglob("*")):
+            if not path.is_file() or path.suffix.lower() in SOURCE_SKIP_EXTS \
+                    or path.suffix == ".md":
+                continue
+            # Classify by the unresolved path: rglob results always sit under
+            # repo, while resolving can follow a symlink out of it entirely.
+            rel_parts = path.relative_to(repo).parts
+            if path.is_relative_to(bundle) \
+                    or any(p.startswith(".") or p in SOURCE_SKIP_DIRS for p in rel_parts[:-1]):
+                continue
+            try:
+                text = path.read_text()
+            except (UnicodeDecodeError, OSError):
+                continue
+            texts.append(text)
+            if path.suffix == ".py":
+                self._index_python(text)
+        self.text = "\n".join(texts)
+
+    @property
+    def empty(self) -> bool:
+        return not self.text
+
+    def _index_python(self, text: str) -> None:
+        try:
+            tree = ast.parse(text)
+        except SyntaxError:
+            return
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ClassDef):
+                continue
+            members = self.classes.setdefault(node.name, set())
+            for child in node.body:
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    members.add(child.name)
+                elif isinstance(child, ast.Assign):
+                    members.update(t.id for t in child.targets if isinstance(t, ast.Name))
+                elif isinstance(child, ast.AnnAssign) and isinstance(child.target, ast.Name):
+                    members.add(child.target.id)
+            # instance attributes: self.<name> = ... anywhere in the class's methods
+            for sub in ast.walk(node):
+                if isinstance(sub, ast.Attribute) and isinstance(sub.ctx, ast.Store) \
+                        and isinstance(sub.value, ast.Name) and sub.value.id == "self":
+                    members.add(sub.attr)
+
+    def has_name(self, name: str) -> bool:
+        if name not in self._name_cache:
+            self._name_cache[name] = re.search(
+                rf"\b{re.escape(name)}\b", self.text) is not None
+        return self._name_cache[name]
+
+
+def symbol_candidate(span: str) -> str | None:
+    """Classify a backticked span: return the normalized symbol, or None."""
+    span = span.strip()
+    if not (SYMBOL_DOTTED_RE.match(span) or SYMBOL_CALL_RE.match(span)
+            or SYMBOL_PRIVATE_RE.match(span)):
+        return None
+    normalized = span.removesuffix("()")
+    parts = normalized.split(".")
+    if len(parts) > 1:
+        if parts[-1].lower() in NON_SYMBOL_EXTS:
+            return None  # a file name, not a symbol
+        if parts[-1] in HOSTNAME_TLDS \
+                and all(re.fullmatch(r"[a-z][a-z0-9-]*", p) for p in parts):
+            return None  # a hostname, not a symbol
+    return normalized
+
+
+def symbol_waivers(body: list[str]) -> set[str]:
+    """Collect symbols waived via `<!-- symbols-ok: <sym> <sym> — reason -->`."""
+    waived: set[str] = set()
+    for match in SYMBOLS_OK_RE.finditer("\n".join(body)):
+        listing = re.split(r"—|--", match.group(1), maxsplit=1)[0]
+        waived.update(t.removesuffix("()") for t in SYMBOL_TOKEN_RE.findall(listing))
+    return waived
+
+
 class BundleLinter:
     def __init__(self, bundle: Path, kind: str = "design") -> None:
         self.bundle = bundle
         self.kind = kind
+        self.corpus: SourceCorpus | None = None
         self.findings: list[Finding] = []
 
     def add(self, severity: Severity, path: Path, line: int, rule: str, message: str) -> None:
@@ -250,6 +392,8 @@ class BundleLinter:
     # --- per-file dispatch ---
 
     def run(self) -> list[Finding]:
+        if self.kind == "docs":
+            self.corpus = SourceCorpus(self.bundle.parent, self.bundle)
         root_index = self.bundle / "index.md"
         if not root_index.is_file():
             self.error(root_index, 1, "missing-index",
@@ -422,9 +566,11 @@ class BundleLinter:
                        f"`stale_after` is an absolute YYYY-MM-DD date, got {stale_after!r} — "
                        "staleness stays a plain date comparison.")
 
-        # Docs bodies have no section skeleton: check links and footnotes over raw lines.
-        for lineno, raw in enumerate(body, start=offset + 1):
-            for match in LINK_RE.finditer(raw):
+        # Docs bodies have no section skeleton: check links and footnotes over raw
+        # lines, skipping code — a link or footnote inside a fence or inline span
+        # is example text, not a claim about the bundle.
+        for lineno, line in code_free_lines(body, offset + 1):
+            for match in LINK_RE.finditer(line):
                 target = match.group(2).strip()
                 if EXTERNAL_TARGET_RE.match(target):
                     continue
@@ -442,6 +588,38 @@ class BundleLinter:
                 self.error(path, 1, "unmatched-footnote",
                            f"footnote label [^{label}] has no matching `sources` entry id — "
                            "the label is the join key into sources.")
+        self.check_symbols(path, body, offset, human_authored)
+
+    def check_symbols(self, path: Path, body: list[str], offset: int,
+                      human_authored: bool) -> None:
+        """Every backticked code symbol must exist in the documented repo."""
+        if self.corpus is None or self.corpus.empty:
+            return
+        waived = symbol_waivers(body)
+        reported: set[str] = set()
+        severity = Severity.WARNING if human_authored else Severity.ERROR
+        for lineno, raw in fence_free_lines(body, offset + 1):
+            for span in INLINE_CODE_RE.findall(raw):
+                symbol = symbol_candidate(span)
+                if symbol is None or symbol in waived or symbol in reported:
+                    continue
+                parts = symbol.split(".")
+                members = self.corpus.classes.get(parts[0]) if len(parts) > 1 else None
+                if members is not None:
+                    # Only the immediate member is statically checkable: in
+                    # `A.b.c`, `c` belongs to whatever `b` is, not to `A`.
+                    if parts[1] in members:
+                        continue
+                    detail = f"class `{parts[0]}` defines no member `{parts[1]}`"
+                else:
+                    if self.corpus.has_name(parts[-1]):
+                        continue
+                    detail = "it has no match in the repo's source files"
+                reported.add(symbol)
+                self.add(severity, path, lineno, "unknown-symbol",
+                         f"`{symbol}`: {detail} — fabricated, renamed, or shorthand? "
+                         "A deliberate mention of a nonexistent symbol is waived with "
+                         f"`<!-- symbols-ok: {symbol} — reason -->`.")
 
     # --- trust family ---
 
@@ -502,8 +680,8 @@ class BundleLinter:
     def check_links(self, path: Path, ctype: str, sections: dict[str, Section]) -> None:
         for name, section in sections.items():
             in_state = ctype == "Map" and name in STATE_SECTIONS
-            for lineno, raw in enumerate(section.content, start=section.line + 1):
-                for match in LINK_RE.finditer(raw):
+            for lineno, line in code_free_lines(section.content, section.line + 1):
+                for match in LINK_RE.finditer(line):
                     target = match.group(2).strip()
                     if EXTERNAL_TARGET_RE.match(target):
                         continue
