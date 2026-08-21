@@ -8,7 +8,7 @@
     {
       "name": "atlas",
       "source": "./plugins/atlas",
-      "description": "Tends a project's OKF knowledge bundles: the widen and deepen skills map design intent under design/ (researching open questions with the waypoint-researcher and waypoint-prototyper agents), and the document skill generates and maintains as-built documentation under docs/ from the code itself (via the enumerator, scribe, synthesizer, and verifier agents). Ships the lint_bundle.py linter both sides run before committing.",
+      "description": "Tends a project's OKF knowledge bundles: the widen and deepen skills map design intent under design/ (researching open questions with the waypoint-researcher and waypoint-prototyper agents, and auditing the record for internal consistency with the wayfinding-auditor agent at session close), and the document skill generates and maintains as-built documentation under docs/ from the code itself (via the enumerator, scribe, synthesizer, and verifier agents). Ships the lint_bundle.py linter both sides run before committing.",
       "category": "workflow"
     },
     {
@@ -20,7 +20,7 @@
     {
       "name": "forgejo",
       "source": "./plugins/forgejo",
-      "description": "The fj skill: a command surface for Forgejo and Gitea repositories — issues, labels, pull requests, releases, and CI status — for any host, via the fj CLI.",
+      "description": "The fj skill: a command surface for Forgejo and Gitea repositories \u2014 issues, labels, pull requests, releases, and CI status \u2014 for any host, via the fj CLI.",
       "category": "development"
     }
   ]
