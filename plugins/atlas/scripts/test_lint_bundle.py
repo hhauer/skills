@@ -340,6 +340,39 @@ class TestMaps(FixtureBase):
         self.write("map.md", VALID_ROOT_MAP + "\n## Frontier\n")
         self.assertIn("empty-section", self.rules(self.errors(lint(self.bundle))))
 
+    def test_map_challenge_section_is_allowed(self) -> None:
+        self.write("index.md", VALID_INDEX)
+        self.write("map.md", VALID_ROOT_MAP + textwrap.dedent("""\
+
+            ## Challenge
+
+            The premise for this region no longer holds — see
+            [api-source](api-source.md). — wayfinding-auditor/test-model, 2026-08-21
+            """))
+        self.write("api-source.md", """\
+            ---
+            type: Decision
+            generated: { by: claude-code/test-model, at: 2026-08-01T10:00:00Z }
+            verified: { by: human:tester, at: 2026-08-01T10:05:00Z }
+            ---
+
+            # api-source
+
+            ## Question
+
+            Where does the data come from?
+
+            ## Decision
+
+            Self-host the dataset, because the vendor API's terms forbid caching.
+            """)
+        self.assertEqual(lint(self.bundle), [])
+
+    def test_empty_challenge_section_is_error(self) -> None:
+        self.write("index.md", VALID_INDEX)
+        self.write("map.md", VALID_ROOT_MAP + "\n## Challenge\n")
+        self.assertIn("empty-section", self.rules(self.errors(lint(self.bundle))))
+
     def test_map_not_named_map_md_is_error(self) -> None:
         self.write_valid_root()
         self.write("billing.md", """\
@@ -488,6 +521,18 @@ class TestWaypoints(FixtureBase):
             "  - { by: process:nightly, at: 2026-08-09T10:05:00Z }\n"
             "  - { by: human:tester, at: 2026-08-09T10:06:00Z }")
         self.assertEqual(lint(self.bundle), [])
+
+    def test_waypoint_challenge_section_is_allowed(self) -> None:
+        self.write_valid_root()
+        self.waypoint(
+            "## Question\n\nQ?\n\n## Decision\n\nA, because B.\n\n"
+            "## Challenge\n\nB was falsified by [c](c.md). "
+            "— wayfinding-auditor/test-model, 2026-08-21\n",
+            "type: Decision\n"
+            "generated: { by: claude-code/test-model, at: 2026-08-09T10:00:00Z }\n"
+            "verified: { by: human:tester, at: 2026-08-09T10:05:00Z }")
+        findings = lint(self.bundle)
+        self.assertEqual(self.errors(findings), [])
 
     def test_verified_missing_at_is_error(self) -> None:
         self.write_valid_root()

@@ -12,9 +12,10 @@ and /atlas:deepen):
     `*.prototype/` directory are prototype artifacts, not concepts — skipped.
   - The bundle root has index.md pinning okf_version "0.2" and a map.md; every
     map has a non-empty Destination.
-  - Maps use only the skeleton sections, omit empty sections, keep Regions and
-    Frontier entries as bare links, and annotate Blocked / Decisions-so-far
-    entries; state-section links must resolve.
+  - Maps use only the skeleton sections (plus the auditor-written Challenge),
+    omit empty sections, keep Regions and Frontier entries as bare links, and
+    annotate Blocked / Decisions-so-far entries; state-section links must
+    resolve.
   - No concept carries OKF `status` (waypoint lifecycle lives in maps).
   - A filled `## Decision` requires a `human:` verifier — the smuggled-
     resolution catch.
@@ -65,6 +66,7 @@ WAYPOINT_TYPES = KNOWN_TYPES - {"Map"}
 MAP_SECTIONS = {
     "Destination", "Notes", "Regions", "Frontier", "Blocked",
     "Decisions so far", "Not yet specified", "Out of scope", "Issues cut",
+    "Challenge",
 }
 BARE_LINK_SECTIONS = {"Regions", "Frontier"}
 ANNOTATED_LINK_SECTIONS = {"Blocked", "Decisions so far"}

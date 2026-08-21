@@ -1,7 +1,7 @@
 {
   "name": "atlas",
-  "description": "Tends a project's OKF knowledge bundles: the widen and deepen skills map design intent under design/ (researching open questions with the waypoint-researcher and waypoint-prototyper agents), and the document skill generates and maintains as-built documentation under docs/ from the code itself (via the enumerator, scribe, synthesizer, and verifier agents). Ships the lint_bundle.py linter both sides run before committing.",
-  "version": "1.4.1",
+  "description": "Tends a project's OKF knowledge bundles: the widen and deepen skills map design intent under design/ (researching open questions with the waypoint-researcher and waypoint-prototyper agents, and auditing the record for internal consistency with the wayfinding-auditor agent at session close), and the document skill generates and maintains as-built documentation under docs/ from the code itself (via the enumerator, scribe, synthesizer, and verifier agents). Ships the lint_bundle.py linter both sides run before committing.",
+  "version": "1.5.0",
   "author": {
     "name": "Harley Hauer"
   }

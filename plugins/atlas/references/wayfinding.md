@@ -8,7 +8,7 @@ One project, one design bundle, permanent. On disk it is OKF: every file is a **
 
 The root map's Destination is the project's north star; every other map's Destination says only what resolved looks like for its own subject. *No code ships from the bundle* is a project-wide invariant, but it is doctrine — this contract, which every session reads — not map content: a Destination describes the project, and writing process rules into it pollutes the north star with machinery.
 
-Sessions land through version control like all other work: each session runs on an ordinary working branch cut from main — or continues the previous session's branch if it hasn't merged yet, rather than stacking a second. At session close, ask the operator to land the branch; **their typed yes in conversation is the approval** (per the version-control rules — a selection in a tool prompt doesn't count), and on it the session fast-forward merges to main (rebasing onto main first if it has moved), pushes, and deletes the branch. If the operator defers, push the branch and stop — it waits unmerged for the next session; a pull request is cut only if the operator asks for one, e.g. to read a founding widen's whole bundle cold before it becomes truth. The bundle on main is the readable truth, so land promptly — but main moves only on that typed approval.
+Sessions land through version control like all other work: each session runs on an ordinary working branch cut from main — or continues the previous session's branch if it hasn't merged yet, rather than stacking a second. **Session close is the operator's act: the session is over when they say it is.** A resolved waypoint — even the focus — is the middle of a session, not its end; finished bookkeeping is never grounds to propose landing, because the operator may have another waypoint, another ramble, or nothing left, and only they know which. At session close, ask the operator to land the branch; **their typed yes in conversation is the approval** (per the version-control rules — a selection in a tool prompt doesn't count), and on it the session fast-forward merges to main (rebasing onto main first if it has moved), pushes, and deletes the branch. If the operator defers, push the branch and stop — it waits unmerged for the next session; a pull request is cut only if the operator asks for one, e.g. to read a founding widen's whole bundle cold before it becomes truth. The bundle on main is the readable truth, so a closed session's branch lands promptly rather than rotting — but promptness is about the branch, never a reason to end the session early, and main moves only on that typed approval.
 
 ### The OKF substrate
 
@@ -104,6 +104,8 @@ At the root: the operator's actor id.>
 
 A waypoint is one question whose answer is one decision, sized to one session. If answering it would take two sittings, it is two waypoints; if it can't yet be phrased as a precisely-stated question, it is fog, not a waypoint.
 
+**A waypoint's prose never asserts what another waypoint decided or whether it is resolved.** A restated resolution is stale the moment the sibling moves — and restatements have been observed stale at birth, written from memory of a state that had already changed. The waypoint links the sibling and lets the reader follow it; when it cannot proceed without the sibling's answer, that dependency is wired into **Blocked**, which is the only place it lives. Context beneath a Question quotes what the operator said, not what another file supposedly settled.
+
 Four types, declared in frontmatter:
 
 - **Decision** (the default) — resolved in conversation with the operator. Human-in-the-loop: the agent never stands in for the operator's side. Its `## Decision` is written only alongside a `verified: { by: human:<id>, at: … }` stamp.
@@ -192,9 +194,21 @@ Resolving a waypoint changes the map around it. Every resolution, in order:
 4. Newly surfaced sharp questions become waypoints, wired into Frontier or Blocked.
 5. New research waypoints get `atlas:waypoint-researcher` dispatched before the session ends; new Prototype waypoints — brief written beneath the Question first — get `atlas:waypoint-prototyper` the same way.
 6. **Check for quiet.** Walk up from the resolved waypoint's map toward the root; if the sweep left any subtree quiet, propose the commitment conversation for the highest quiet node (see below).
-7. Run the lint, fix what it finds, commit, and land the branch per the version-control contract above.
+7. Run the lint, fix what it finds, and commit.
+
+Bookkeeping ends at the commit. Landing is not a bookkeeping step: the branch lands once, at session close, on the operator's end-of-session signal — per the version-control contract above.
 
 The sweep is not optional housekeeping — an unswept map lies about what's takeable, and the next session inherits the lie.
+
+## The audit — challenges to the record
+
+The bundle gets written faster than it gets re-read: a Decision recorded today can falsify prose written last month, in this region or another, and the session that records it — hours of conversation deep — is the actor least able to re-read the bundle for what just went stale. So the cross-region half of the sweep is delegated. **At session close, a session that wrote or amended any concept dispatches the `atlas:wayfinding-auditor` agent** — a plain unnamed background dispatch, widen and deepen alike — passing the bundle root and the list of concepts the session touched.
+
+The auditor re-reads what this session could have falsified: the touched concepts, plus every concept that links to them or that they link to. It checks the record's consistency **with itself** — a Decision whose recorded why's supports no longer hold, prose asserting another concept's state that no longer matches it, a concept contradicting itself, a map whose premise for its region a later decision falsified. It never judges whether a decision was right: a Decision whose recorded why still stands is out of its reach, which is what keeps the audit from re-litigating settled work.
+
+Findings are challenges, not fixes. The auditor appends one `## Challenge` section to each affected concept — the challenged claim, the falsifying concepts linked, its own attribution and date — and touches nothing else: no other section, no trust frontmatter, no map state entries, no git. `## Challenge` may sit on any concept, map or waypoint, and is the one section sessions never author — they only resolve it. The next deepening session's sweep surfaces every open challenge to the operator, who re-affirms the challenged text (delete the section) or amends it per the mutability rule above, new why and fresh confirmation included. A challenge is never resolved by an agent.
+
+What no audit reaches: a why falsified only in conversation, never recorded anywhere, leaves no inconsistency in the record to find. The conversation discipline's live challenge — calling out a contradiction the moment it is spoken — remains the only catch for that class.
 
 ## Quiet subtrees — where issues get cut
 
@@ -206,6 +220,8 @@ The commitment conversation, when the operator takes it:
 
 1. **Slice.** Propose how the subtree's resolved design divides into backlog issues — how many changes, what order, what depends on what. A quiet subtree cuts alone; it never waits for siblings.
 2. **Promote.** Which slices are committed work and which are drafts is the operator's call, made here — never assumed from quietness.
+
+The commitment conversation can also return a verdict about the map itself. **If the subtree's design cannot slice into buildable issues on its own — every candidate change spans the subtree's boundary — the subtree is not un-cuttable; the boundary is misdrawn.** A region exists to partition the territory, and a quiet subtree whose buildable units all reach into a sibling is evidence the partition missed. The licensed move is proposing a redraw — merge the region with the sibling its slices span into, or move the concepts that belong together — as an ordinary map edit on the operator's yes, whys carried along intact. The redrawn subtree cuts when it next goes quiet; neither forcing a cut that cannot build nor waiting silently is an option.
 
 **The bundle's part ends there.** Filing the issues, and writing the map's `## Issues cut` section afterward, belong to whatever backlog tool the project uses — the bundle owns the slice and the slot, not the filing. The slot's contract holds regardless of who writes it: an ordered list, in build order, of issue links with one-line gists. **Cross-issue ordering lives in that section and nowhere else**, because issue trackers generally cannot express dependency between issues; a map that omits the order loses it for good.
 
