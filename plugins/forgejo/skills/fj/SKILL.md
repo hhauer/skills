@@ -76,6 +76,13 @@ round trip to discover. Verified against `fj v0.6.0`.
   because the line no longer starts where it did. To edit a body, rewrite it
   from your own source text; if you must round-trip, strip the `> ` prefixes
   and the comments line first (and the directional isolates — see below).
+- **`edit … body` has no `--body-file` — the whole body is one positional.**
+  `fj issue edit 7 body` / `fj pr edit 42 body` take the replacement text only
+  as `[NEW_BODY]`, so a long body must be inlined as `"$(cat body.md)"`. That
+  command substitution is exactly what an agent's isolation heuristic refuses,
+  so the working shape is a two-line script — `set -euo pipefail`, then the
+  `fj … body "$(cat …)"` line — written to the scratchpad and run as a plain
+  command. `create` and `comment` don't need this; both take `--body-file`.
 - **There is no `fj label` command.** Label *definitions* live under
   `fj repo labels` (`view`/`create`/`edit`/`delete`). `fj issue edit <n>
   labels -a <name>` only *attaches* an existing label to an issue — it does
