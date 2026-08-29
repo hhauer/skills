@@ -68,6 +68,14 @@ round trip to discover. Verified against `fj v0.6.0`.
   `fj pr view 42 diff`, `fj pr view 42 files`, `fj pr view 42 body`,
   `fj issue edit 7 title "New"`, `fj issue edit 7 labels -a foo -r bar`
   (`-r`/`--rm` removes; gh's word is `--remove`).
+- **`view … body` output is blockquoted — never pipe it back into `edit`.**
+  `fj pr view 42 body` / `fj issue view 7 body` print every body line with a
+  `> ` prefix (and a trailing `N comments` line). Feeding that output to
+  `fj pr edit 42 body "$(…)"` after a `sed` rewrite silently writes the
+  quoted text as the new body, doubling the quote depth, and the `sed` misses
+  because the line no longer starts where it did. To edit a body, rewrite it
+  from your own source text; if you must round-trip, strip the `> ` prefixes
+  and the comments line first (and the directional isolates — see below).
 - **There is no `fj label` command.** Label *definitions* live under
   `fj repo labels` (`view`/`create`/`edit`/`delete`). `fj issue edit <n>
   labels -a <name>` only *attaches* an existing label to an issue — it does
