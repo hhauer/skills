@@ -5,8 +5,8 @@
 Lints a knowledge bundle so the atlas skills catch format drift before
 committing. One script, two bundle kinds sharing one substrate:
 
-`--kind design` (default; see references/wayfinding.md — used by /atlas:widen
-and /atlas:deepen):
+`--kind design` (default; see references/wayfinding.md — used by
+/atlas:wayfinder):
   - Every concept (non-reserved .md) carries parseable frontmatter with a known
     `type` (Map, Decision, Research, Prototype, Task). Files inside a
     `*.prototype/` directory are prototype artifacts, not concepts — skipped.

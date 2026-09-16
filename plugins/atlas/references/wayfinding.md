@@ -1,6 +1,6 @@
 # Wayfinding: the design bundle and its discipline
 
-Shared contract for `/atlas:widen` and `/atlas:deepen` — the pre-spec design phase. A project's design intent lives in one permanent **knowledge bundle**: a corpus of markdown maps and waypoints at `design/`, on main, conforming to the [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/3fcbb9f828c2f23d109c855ee403c3a4c81f3a96/okf/SPEC.md). A widening session fans out breadth-first over one region, producing waypoints and fog, resolving nothing. A deepening session resolves one waypoint depth-first, with the operator. Both are map operations on the same bundle; neither opens an effort and neither concludes one. Quiet regions slice into backlog issues; nothing is built from the bundle directly.
+The contract `/atlas:wayfinder` applies — the pre-spec design phase. A project's design intent lives in one permanent **knowledge bundle**: a corpus of markdown maps and waypoints at `design/`, on main, conforming to the [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/3fcbb9f828c2f23d109c855ee403c3a4c81f3a96/okf/SPEC.md). The widen motion fans out breadth-first over one region, producing waypoints and fog, resolving nothing. The deepen motion resolves one waypoint depth-first, with the operator. Both are map operations on the same bundle, and a session moves between them; neither opens an effort and neither concludes one. Nothing is built from the bundle directly.
 
 ## The bundle
 
@@ -95,10 +95,10 @@ At the root: the operator's actor id.>
 
 ## Issues cut
 
-<Absent until commitment — see Quiet subtrees below.>
+<Absent until issues have been cut — see Issues below.>
 ```
 
-**Regions and Frontier list children as bare links — never with a status annotation.** No "mostly done", no "quiet", no progress prose. A parent that records nothing about a child's state has nothing that can drift; whether a subtree is quiet is discovered by reading it, never recorded above it.
+**Regions and Frontier list children as bare links — never with a status annotation.** No "mostly done", no "quiet", no progress prose. A parent that records nothing about a child's state has nothing that can drift; whether a subtree still holds open questions is discovered by reading it, never recorded above it.
 
 ### Waypoints
 
@@ -180,7 +180,7 @@ Sessions run on the operator's long, voice-dictated rambles. The unit of convers
 - A decision the operator stated in so many words — with its why: record it this session. The reflect-back is its audit; a misread is corrected on the spot.
 - Anything you interpreted, inferred, or assumed — an ambiguous phrase read one way, a gap filled with a sensible default, an answer the stated mechanics merely *imply* ("re-send reissues the token, so reissue-or-expire must be the whole revocation story"): **not until they confirm**. Implication is still inference. When the Question names a part (revocation, say) that the ramble never addressed, that part is still open, however neatly the rest seems to cover it. A gap in the ramble is an open question, not a slot for your recommendation. The tell that you're crossing this line is opt-out framing — "I recorded X; say so if you want otherwise" is a decision you just made for them. The licensed form is "my read is X — confirm it and it goes in the record."
 - A ramble that decisively settles a *different* frontier waypoint: reflect it explicitly ("this also resolves plan-gating — confirm?") and resolve it only on their yes. Spillover that informs without settling is written into that waypoint's file beneath its Question as context — a note in the chat is a note lost.
-- Scope rulings, out-of-scope moves, and cutting a quiet subtree's issues: always confirmed, never assumed.
+- Scope rulings and out-of-scope moves: always confirmed, never assumed.
 
 Standing rules: facts findable in the environment are looked up, never asked. Decisions are always the operator's — recommend, then wait. Never answer your own question and proceed.
 
@@ -193,8 +193,7 @@ Resolving a waypoint changes the map around it. Every resolution, in order:
 3. **Sweep the map against the new answer.** Fog this answer sharpened graduates into waypoints (and leaves Not-yet-specified). Blocked waypoints whose last blocker just closed move to Frontier. Prose anywhere the answer made stale gets fixed — in this map or any other; the bundle is mutable. Waypoints the answer invalidated are amended or deleted; waypoints it revealed as past the destination are proposed for Out of scope.
 4. Newly surfaced sharp questions become waypoints, wired into Frontier or Blocked.
 5. New research waypoints get `atlas:waypoint-researcher` dispatched before the session ends; new Prototype waypoints — brief written beneath the Question first — get `atlas:waypoint-prototyper` the same way.
-6. **Check for quiet.** Walk up from the resolved waypoint's map toward the root; if the sweep left any subtree quiet, propose the commitment conversation for the highest quiet node (see below).
-7. Run the lint, fix what it finds, and commit.
+6. Run the lint, fix what it finds, and commit.
 
 Bookkeeping ends at the commit. Landing is not a bookkeeping step: the branch lands once, at session close, on the operator's end-of-session signal — per the version-control contract above.
 
@@ -202,27 +201,16 @@ The sweep is not optional housekeeping — an unswept map lies about what's take
 
 ## The audit — challenges to the record
 
-The bundle gets written faster than it gets re-read: a Decision recorded today can falsify prose written last month, in this region or another, and the session that records it — hours of conversation deep — is the actor least able to re-read the bundle for what just went stale. So the cross-region half of the sweep is delegated. **At session close, a session that wrote or amended any concept dispatches the `atlas:wayfinding-auditor` agent** — a plain unnamed background dispatch, widen and deepen alike — passing the bundle root and the list of concepts the session touched.
+The bundle gets written faster than it gets re-read: a Decision recorded today can falsify prose written last month, in this region or another, and the session that records it — hours of conversation deep — is the actor least able to re-read the bundle for what just went stale. So the cross-region half of the sweep is delegated. **At session close, a session that wrote or amended any concept dispatches the `atlas:wayfinding-auditor` agent** — a plain unnamed background dispatch, whichever motion wrote the concept — passing the bundle root and the list of concepts the session touched.
 
 The auditor re-reads what this session could have falsified: the touched concepts, plus every concept that links to them or that they link to. It checks the record's consistency **with itself** — a Decision whose recorded why's supports no longer hold, prose asserting another concept's state that no longer matches it, a concept contradicting itself, a map whose premise for its region a later decision falsified. It never judges whether a decision was right: a Decision whose recorded why still stands is out of its reach, which is what keeps the audit from re-litigating settled work.
 
-Findings are challenges, not fixes. The auditor appends one `## Challenge` section to each affected concept — the challenged claim, the falsifying concepts linked, its own attribution and date — and touches nothing else: no other section, no trust frontmatter, no map state entries, no git. `## Challenge` may sit on any concept, map or waypoint, and is the one section sessions never author — they only resolve it. The next deepening session's sweep surfaces every open challenge to the operator, who re-affirms the challenged text (delete the section) or amends it per the mutability rule above, new why and fresh confirmation included. A challenge is never resolved by an agent.
+Findings are challenges, not fixes. The auditor appends one `## Challenge` section to each affected concept — the challenged claim, the falsifying concepts linked, its own attribution and date — and touches nothing else: no other section, no trust frontmatter, no map state entries, no git. `## Challenge` may sit on any concept, map or waypoint, and is the one section sessions never author — they only resolve it. The next deepen's sweep surfaces every open challenge to the operator, who re-affirms the challenged text (delete the section) or amends it per the mutability rule above, new why and fresh confirmation included. A challenge is never resolved by an agent.
 
 What no audit reaches: a why falsified only in conversation, never recorded anywhere, leaves no inconsistency in the record to find. The conversation discipline's live challenge — calling out a contradiction the moment it is spoken — remains the only catch for that class.
 
-## Quiet subtrees — where issues get cut
+## Issues
 
-A permanent bundle never runs out: there is always another open question somewhere. The unit that finishes is the **subtree**. A subtree is **quiet** when its map and every map beneath it have an empty Frontier, an empty Blocked, and nothing in Not yet specified. A quiet subtree is what an effort used to be — discovered at whatever size the design actually resolved, not declared in advance.
+Nothing is built from the bundle, and the bundle files no issues: turning resolved design into backlog issues belongs to whatever process the project runs for that, outside these sessions. What the bundle owns is the record of the result. A map carries an `## Issues cut` section once issues have been cut from its subject — an ordered list, in build order, of issue links with one-line gists — and that section is the one home of cross-issue ordering, because issue trackers generally cannot express dependency between issues; a map that omits the order loses it for good.
 
-When bookkeeping finds a quiet subtree, **propose the commitment conversation there and then** — proposing is the session's job, deciding is the operator's: hold it now, or park it and keep deepening elsewhere. A parked proposal is re-raised next time the subtree is touched; it is never queued in a file — a "ready to cut" list is state the maps don't own.
-
-The commitment conversation, when the operator takes it:
-
-1. **Slice.** Propose how the subtree's resolved design divides into backlog issues — how many changes, what order, what depends on what. A quiet subtree cuts alone; it never waits for siblings.
-2. **Promote.** Which slices are committed work and which are drafts is the operator's call, made here — never assumed from quietness.
-
-The commitment conversation can also return a verdict about the map itself. **If the subtree's design cannot slice into buildable issues on its own — every candidate change spans the subtree's boundary — the subtree is not un-cuttable; the boundary is misdrawn.** A region exists to partition the territory, and a quiet subtree whose buildable units all reach into a sibling is evidence the partition missed. The licensed move is proposing a redraw — merge the region with the sibling its slices span into, or move the concepts that belong together — as an ordinary map edit on the operator's yes, whys carried along intact. The redrawn subtree cuts when it next goes quiet; neither forcing a cut that cannot build nor waiting silently is an option.
-
-**The bundle's part ends there.** Filing the issues, and writing the map's `## Issues cut` section afterward, belong to whatever backlog tool the project uses — the bundle owns the slice and the slot, not the filing. The slot's contract holds regardless of who writes it: an ordered list, in build order, of issue links with one-line gists. **Cross-issue ordering lives in that section and nowhere else**, because issue trackers generally cannot express dependency between issues; a map that omits the order loses it for good.
-
-The arrow runs one way: **bundle → issues → build**. Backlog issues are never an input to a widening, and design work is never filed as an issue. There is no back-feed from implementation either — when building collides with reality, the next widening's fan-out reads the specs and code like any other part of the environment and re-fogs what changed. A cut subtree that later reopens is just a subtree with new fog; the bundle is mutable.
+There is no back-feed from implementation into the record either: when building collides with reality, the next widen's fan-out reads the specs and code like any other part of the environment and re-fogs what changed. A subtree that later reopens is just a subtree with new fog; the bundle is mutable.

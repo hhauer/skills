@@ -13,7 +13,7 @@ rules bind — consult it when a boundary call isn't settled by your own brief.
 A project carries up to two knowledge bundles, and they are never one folder:
 
 - **`design/`** — as-designed: what *ought* to be built. Stateful maps and
-  waypoints, tended by `/atlas:widen` and `/atlas:deepen`.
+  waypoints, tended by `/atlas:wayfinder`.
 - **`docs/`** — as-built: what the system *is*. How it works, how to operate
   it, what is reusable. Tended by `/atlas:document`.
 
