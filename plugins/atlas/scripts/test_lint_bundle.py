@@ -471,6 +471,16 @@ class TestMaps(FixtureBase):
         self.assertIn("broken-link", self.rules(self.warnings(findings)))
         self.assertNotIn("broken-link", self.rules(self.errors(findings)))
 
+    def test_map_handed_off_section_is_allowed(self) -> None:
+        self.write("index.md", VALID_INDEX)
+        self.write("map.md", VALID_ROOT_MAP + textwrap.dedent("""\
+
+            ## Handed off
+
+            - whether a regional structure is the same object as a compound machine — owned by the construction spec
+            """))
+        self.assertEqual(lint(self.bundle), [])
+
     def test_external_links_are_ignored(self) -> None:
         self.write("index.md", VALID_INDEX)
         self.write("map.md", VALID_ROOT_MAP + textwrap.dedent("""\

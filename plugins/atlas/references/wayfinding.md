@@ -93,6 +93,10 @@ At the root: the operator's actor id.>
 
 - <gist> — <why it sits past this map's destination>
 
+## Handed off
+
+- <gist of the code-shape question> — owned by the spec for <system>
+
 ## Issues cut
 
 <Absent until issues have been cut — see Issues below.>
@@ -103,6 +107,8 @@ At the root: the operator's actor id.>
 ### Waypoints
 
 A waypoint is one question whose answer is one decision, sized to one session. If answering it would take two sittings, it is two waypoints; if it can't yet be phrased as a precisely-stated question, it is fog, not a waypoint.
+
+**A waypoint asks what the project is, never how its code is shaped.** A question phrased against shipped capabilities — whether a new thing is "the same kind of object" to the system that already builds one, whether an existing module grows a field or a second surface appears beside it, whether the current config surface can express a new kind of entry — is neither fog nor frontier. The design has settled *what* exists, and only the code shape is open; that question belongs to the change that builds it, where the codebase is in front of whoever answers. The bundle refuses to hold it as a waypoint and records it as handed off — see Handed off below.
 
 **A waypoint's prose never asserts what another waypoint decided or whether it is resolved.** A restated resolution is stale the moment the sibling moves — and restatements have been observed stale at birth, written from memory of a state that had already changed. The waypoint links the sibling and lets the reader follow it; when it cannot proceed without the sibling's answer, that dependency is wired into **Blocked**, which is the only place it lives. Context beneath a Question quotes what the operator said, not what another file supposedly settled.
 
@@ -148,6 +154,12 @@ Map only what you can see. Beyond the live waypoints lies the fog — decisions 
 
 Each map's destination fixes its scope; work past it is out of scope — not fog. It gets one gist line in **Out of scope** with the reason. Ruling something out is a **scoping act, and scoping acts are the operator's**: propose the ruling, get their yes, then move it. A waypoint revealed to sit past the destination is closed with a line here, not resolved. Abandoning a whole direction works the same way — its files move under Out of scope with their reasoning intact. An edit keeps the why; there is no deleted branch to lose it.
 
+## Handed off
+
+Each map's destination fixes what its subject *is*; how the code realises it lies below the map's floor — not fog, not frontier, and not out of scope either. When a fan-out or a resolution surfaces a question shaped against the code, it gets one gist line in **Handed off** — the question and the system whose spec owns it — and no file. The tell is a Question that only makes sense to someone with the shipped capability open: "to the system that already builds things", "the existing capability grows a field", "a different kind of catalog entry". A waypoint already cut that turns out to be one is deleted and its gist moved here; the bundle is mutable and git keeps the file. Handing off is a reading of the question, not a scoping act: reflect it back like any other read, and if the operator sharpens it into a question about play, it is a waypoint after all.
+
+A handed-off question never holds a region back from being cut into issues: the design settled the *what*, and the spec answers the *how*. Whatever process turns resolved design into backlog reads this section as exactly that signal.
+
 ## The bundle is mutable — and the why is load-bearing
 
 The bundle is **not a verification contract**. A behavior-spec surface's records — an OpenSpec tree's, an ADR directory's, whatever the repo carries — are immutable because shipped code is checked against them; the design bundle is checked against nothing. It is the design north star, co-mutated — edited deliberately and jointly, the way any high-ranking single source of truth is. Corrections happen in place, not in appendices; closing a question has never precluded reopening it.
@@ -191,7 +203,7 @@ Resolving a waypoint changes the map around it. Every resolution, in order:
 1. Write `## Decision` into the waypoint — the what and the why, per the mutability rule above — and stamp `verified` with the operator's actor and the confirmation time. For a Prototype waypoint this is also when the artifact dies: delete its `.prototype/` directory and its `## Artifact` section — only the verdict survives.
 2. Move its name to **Decisions so far** in its nearest enclosing map, with a one-line gist.
 3. **Sweep the map against the new answer.** Fog this answer sharpened graduates into waypoints (and leaves Not-yet-specified). Blocked waypoints whose last blocker just closed move to Frontier. Prose anywhere the answer made stale gets fixed — in this map or any other; the bundle is mutable. Waypoints the answer invalidated are amended or deleted; waypoints it revealed as past the destination are proposed for Out of scope.
-4. Newly surfaced sharp questions become waypoints, wired into Frontier or Blocked.
+4. Newly surfaced sharp questions become waypoints, wired into Frontier or Blocked — except questions about how the code is shaped, which go to the map's Handed off, never to a file.
 5. New research waypoints get `atlas:waypoint-researcher` dispatched before the session ends; new Prototype waypoints — brief written beneath the Question first — get `atlas:waypoint-prototyper` the same way.
 6. Run the lint, fix what it finds, and commit.
 
