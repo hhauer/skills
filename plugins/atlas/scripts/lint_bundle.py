@@ -65,8 +65,8 @@ ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 WAYPOINT_TYPES = KNOWN_TYPES - {"Map"}
 MAP_SECTIONS = {
     "Destination", "Notes", "Regions", "Frontier", "Blocked",
-    "Decisions so far", "Not yet specified", "Out of scope", "Issues cut",
-    "Challenge",
+    "Decisions so far", "Not yet specified", "Out of scope", "Handed off",
+    "Issues cut", "Challenge",
 }
 BARE_LINK_SECTIONS = {"Regions", "Frontier"}
 ANNOTATED_LINK_SECTIONS = {"Blocked", "Decisions so far"}
