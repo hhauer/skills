@@ -91,7 +91,7 @@ At the root: the operator's actor id.>
 
 ## Out of scope
 
-- <gist> — <why it sits past this map's destination>
+- <gist> — <the operator's reason it sits past this map's destination, when they gave one>
 
 ## Handed off
 
@@ -152,7 +152,7 @@ Map only what you can see. Beyond the live waypoints lies the fog — decisions 
 
 ## Out of scope
 
-Each map's destination fixes its scope; work past it is out of scope — not fog. It gets one gist line in **Out of scope** with the reason. Ruling something out is a **scoping act, and scoping acts are the operator's**: propose the ruling, get their yes, then move it. A waypoint revealed to sit past the destination is closed with a line here, not resolved. Abandoning a whole direction works the same way — its files move under Out of scope with their reasoning intact. An edit keeps the why; there is no deleted branch to lose it.
+Each map's destination fixes its scope; work past it is out of scope — not fog. It gets one gist line in **Out of scope**, with the operator's reason when they gave one. Ruling something out is a **scoping act, and scoping acts are the operator's**: propose the ruling, get their yes, then move it. A waypoint revealed to sit past the destination is closed with a line here, not resolved. Abandoning a whole direction works the same way — its files move under Out of scope with their reasoning intact. An edit keeps the why; there is no deleted branch to lose it.
 
 ## Handed off
 
@@ -160,21 +160,23 @@ Each map's destination fixes what its subject *is*; how the code realises it lie
 
 A handed-off question never holds a region back from being cut into issues: the design settled the *what*, and the spec answers the *how*. Whatever process turns resolved design into backlog reads this section as exactly that signal.
 
-## The bundle is mutable — and the why is load-bearing
+## The bundle is mutable — and a Decision is the operator's ruling
 
 The bundle is **not a verification contract**. A behavior-spec surface's records — an OpenSpec tree's, an ADR directory's, whatever the repo carries — are immutable because shipped code is checked against them; the design bundle is checked against nothing. It is the design north star, co-mutated — edited deliberately and jointly, the way any high-ranking single source of truth is. Corrections happen in place, not in appendices; closing a question has never precluded reopening it.
 
-Mutability is what makes the why mandatory. A future editor reading `decided X` with no stated reason cannot tell whether the reason still holds, and will either preserve the decision superstitiously or overwrite it carelessly. Git history technically holds the ramble; nobody reads git history for design rationale. So:
+**A Decision records what the operator ruled, as they ruled it.** Their statement of the decision — or their yes to your read of it — is the whole warrant for writing it, and the `verified` stamp records that it happened. Design decisions are often the operator's judgment or taste with nothing further behind them: "weekly", "yes", and "no" are complete rulings, and each is recorded in the session it is given.
 
-**A Decision enters the record only with its why, and the why is the operator's — stated by them, or proposed by you and confirmed by them.** The `verified` stamp records that the confirmation happened; the Decision's prose records the why itself. No why, no record. This holds under every pressure:
+What the Decision's text holds follows from what the operator said:
 
-- "Log it and move on" is not a why. The licensed move costs one sentence: *"Recording it needs the because — one sentence?"* An operator three hours in can produce a reason in less time than it takes to flag its absence.
-- Do not record the decision with the rationale slot blank or "flagged for later." A why-less entry is not a safe placeholder — it is exactly the unsafe page mutability forbids, and later never comes.
-- Do not draft a plausible rationale and record it flagged as inference, promising it's cheap to fix. That is your reasoning laundered into the operator's record, wrapped in the opt-out framing the conversation discipline already bans. Propose the why aloud, get the yes, then write it.
-- Do not stamp `verified` with the operator's actor on your own authority — the stamp asserts their confirmation happened in conversation, and a fabricated stamp is a forged signature on a record built to be trusted. (The lint catches a Decision with no human stamp; only the discipline prevents a false one.)
-- Refusing to write is not holding the session hostage; it is one reflected question. The decision stays in the conversation, loses nothing, and lands the moment the reason exists.
+- **They stated the decision and a reason:** record both, the reason in their terms.
+- **They stated the decision alone:** record the decision alone — no reason, no placeholder, no note that one is missing. Recording does not wait on a reason, and the session does not ask for one.
+- **They answered your recommendation with a bare yes:** record the decision alone. The reasoning behind the recommendation was yours, and it stays in the conversation.
 
-Editing an existing Decision follows the same rule: the new text carries the new why, a fresh `generated` stamp, and a fresh confirmation.
+A reason you draft does not belong in a Decision even when the operator would nod at it. Text in a Decision reads, in every later session, as the operator's own held position: it gets cited back to them, defended against their next idea, and audited when its supports move. A plausible reason of yours, sitting there, becomes a conviction they never had. A Decision with no reason is safe as it stands — changing it takes the operator's confirmation like any other edit, and they are the one who knows whether their judgment has moved.
+
+Do not stamp `verified` with the operator's actor on your own authority — the stamp asserts their confirmation happened in conversation, and a fabricated stamp is a forged signature on a record built to be trusted. (The lint catches a Decision with no human stamp; only the discipline prevents a false one.)
+
+Editing an existing Decision follows the same rule: the new text carries a fresh `generated` stamp and a fresh confirmation, and a reason only if the operator gave one.
 
 ## The conversation discipline
 
@@ -184,12 +186,12 @@ Sessions run on the operator's long, voice-dictated rambles. The unit of convers
 
 **Then reply, in two moves:**
 
-1. **Reflect back what the ramble settled**, as `decided X because Y` lines — the mirror the operator checks for misreadings. Challenges belong here too: a statement that contradicts a Decisions-so-far entry is called out immediately ("auth-provider decided Clerk; you just described minting our own sessions — which holds?"); a fuzzy boundary is stress-tested with a concrete edge-case scenario, not an abstract question.
+1. **Reflect back what the ramble settled**, as `decided X` lines — with `because Y` only where the operator said the Y — the mirror the operator checks for misreadings. Challenges belong here too: a statement that contradicts a Decisions-so-far entry is called out immediately ("auth-provider decided Clerk; you just described minting our own sessions — which holds?"); a fuzzy boundary is stress-tested with a concrete edge-case scenario, not an abstract question.
 2. **Pose the single most load-bearing question the ramble left open, with your recommended answer.** One question, in prose. Never AskUserQuestion — forced choices are the wrong shape for an operator who thinks by rambling.
 
 **What may enter the record, and when:**
 
-- A decision the operator stated in so many words — with its why: record it this session. The reflect-back is its audit; a misread is corrected on the spot.
+- A decision the operator stated in so many words: record it this session, with their reason when they gave one and alone when they did not. The reflect-back is its audit; a misread is corrected on the spot.
 - Anything you interpreted, inferred, or assumed — an ambiguous phrase read one way, a gap filled with a sensible default, an answer the stated mechanics merely *imply* ("re-send reissues the token, so reissue-or-expire must be the whole revocation story"): **not until they confirm**. Implication is still inference. When the Question names a part (revocation, say) that the ramble never addressed, that part is still open, however neatly the rest seems to cover it. A gap in the ramble is an open question, not a slot for your recommendation. The tell that you're crossing this line is opt-out framing — "I recorded X; say so if you want otherwise" is a decision you just made for them. The licensed form is "my read is X — confirm it and it goes in the record."
 - A ramble that decisively settles a *different* frontier waypoint: reflect it explicitly ("this also resolves plan-gating — confirm?") and resolve it only on their yes. Spillover that informs without settling is written into that waypoint's file beneath its Question as context — a note in the chat is a note lost.
 - Scope rulings and out-of-scope moves: always confirmed, never assumed.
@@ -200,7 +202,7 @@ Standing rules: facts findable in the environment are looked up, never asked. De
 
 Resolving a waypoint changes the map around it. Every resolution, in order:
 
-1. Write `## Decision` into the waypoint — the what and the why, per the mutability rule above — and stamp `verified` with the operator's actor and the confirmation time. For a Prototype waypoint this is also when the artifact dies: delete its `.prototype/` directory and its `## Artifact` section — only the verdict survives.
+1. Write `## Decision` into the waypoint — the operator's ruling, plus their reason where they gave one, per the mutability section above — and stamp `verified` with the operator's actor and the confirmation time. For a Prototype waypoint this is also when the artifact dies: delete its `.prototype/` directory and its `## Artifact` section — only the verdict survives.
 2. Move its name to **Decisions so far** in its nearest enclosing map, with a one-line gist.
 3. **Sweep the map against the new answer.** Fog this answer sharpened graduates into waypoints (and leaves Not-yet-specified). Blocked waypoints whose last blocker just closed move to Frontier. Prose anywhere the answer made stale gets fixed — in this map or any other; the bundle is mutable. Waypoints the answer invalidated are amended or deleted; waypoints it revealed as past the destination are proposed for Out of scope.
 4. Newly surfaced sharp questions become waypoints, wired into Frontier or Blocked — except questions about how the code is shaped, which go to the map's Handed off, never to a file.
@@ -215,9 +217,9 @@ The sweep is not optional housekeeping — an unswept map lies about what's take
 
 The bundle gets written faster than it gets re-read: a Decision recorded today can falsify prose written last month, in this region or another, and the session that records it — hours of conversation deep — is the actor least able to re-read the bundle for what just went stale. So the cross-region half of the sweep is delegated. **At session close, a session that wrote or amended any concept dispatches the `atlas:wayfinding-auditor` agent** — a plain unnamed background dispatch, whichever motion wrote the concept — passing the bundle root and the list of concepts the session touched.
 
-The auditor re-reads what this session could have falsified: the touched concepts, plus every concept that links to them or that they link to. It checks the record's consistency **with itself** — a Decision whose recorded why's supports no longer hold, prose asserting another concept's state that no longer matches it, a concept contradicting itself, a map whose premise for its region a later decision falsified. It never judges whether a decision was right: a Decision whose recorded why still stands is out of its reach, which is what keeps the audit from re-litigating settled work.
+The auditor re-reads what this session could have falsified: the touched concepts, plus every concept that links to them or that they link to. It checks the record's consistency **with itself** — a Decision whose recorded reason rests on supports that no longer hold, prose asserting another concept's state that no longer matches it, a concept contradicting itself, a map whose premise for its region a later decision falsified. It never judges whether a decision was right: a Decision whose recorded reason still stands — or that records none — is out of its reach, which is what keeps the audit from re-litigating settled work.
 
-Findings are challenges, not fixes. The auditor appends one `## Challenge` section to each affected concept — the challenged claim, the falsifying concepts linked, its own attribution and date — and touches nothing else: no other section, no trust frontmatter, no map state entries, no git. `## Challenge` may sit on any concept, map or waypoint, and is the one section sessions never author — they only resolve it. The next deepen's sweep surfaces every open challenge to the operator, who re-affirms the challenged text (delete the section) or amends it per the mutability rule above, new why and fresh confirmation included. A challenge is never resolved by an agent.
+Findings are challenges, not fixes. The auditor appends one `## Challenge` section to each affected concept — the challenged claim, the falsifying concepts linked, its own attribution and date — and touches nothing else: no other section, no trust frontmatter, no map state entries, no git. `## Challenge` may sit on any concept, map or waypoint, and is the one section sessions never author — they only resolve it. The next deepen's sweep surfaces every open challenge to the operator, who re-affirms the challenged text (delete the section) or amends it per the mutability section above, fresh confirmation included. A challenge is never resolved by an agent.
 
 What no audit reaches: a why falsified only in conversation, never recorded anywhere, leaves no inconsistency in the record to find. The conversation discipline's live challenge — calling out a contradiction the moment it is spoken — remains the only catch for that class.
 
