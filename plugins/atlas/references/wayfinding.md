@@ -108,6 +108,14 @@ At the root: the operator's actor id.>
 
 A waypoint is one question whose answer is one decision, sized to one session. If answering it would take two sittings, it is two waypoints; if it can't yet be phrased as a precisely-stated question, it is fog, not a waypoint.
 
+**A waypoint is a decision the operator could sit down and make.** They may need research or time to think first, but it is one sitting that ends in one answer. Before anything a ramble surfaces becomes a waypoint or a fog line, name the sitting in which it would be answered:
+
+- **A sitting of its own, ending in one answer** — a waypoint if the question is sharp, fog if it is not yet.
+- **The sitting for one existing waypoint** — context beneath that waypoint's Question, and no new node.
+- **Every sibling's sitting, one answer apiece** — no node at all. "Which reports get a summary line" or "which plans include the export", asked across a set whose members are each decided on their own, has no answer of its own: its answer is a list with one entry per member, and each entry is settled when that member is worked. It is a quality each member may or may not have. The Decision that introduced the quality says the other members decide it for themselves, and that sentence is the whole record — no waypoint, no fog line, and no note added to the siblings.
+
+A question about the quality itself still has one answer and a sitting of its own — where a summary line is printed, whether a report may carry two — and is a waypoint or fog like any other.
+
 **A waypoint asks what the project is, never how its code is shaped.** A question phrased against shipped capabilities — whether a new thing is "the same kind of object" to the system that already builds one, whether an existing module grows a field or a second surface appears beside it, whether the current config surface can express a new kind of entry — is neither fog nor frontier. The design has settled *what* exists, and only the code shape is open; that question belongs to the change that builds it, where the codebase is in front of whoever answers. The bundle refuses to hold it as a waypoint and records it as handed off — see Handed off below.
 
 **A waypoint's prose never asserts what another waypoint decided or whether it is resolved.** A restated resolution is stale the moment the sibling moves — and restatements have been observed stale at birth, written from memory of a state that had already changed. The waypoint links the sibling and lets the reader follow it; when it cannot proceed without the sibling's answer, that dependency is wired into **Blocked**, which is the only place it lives. Context beneath a Question quotes what the operator said, not what another file supposedly settled.
@@ -148,7 +156,7 @@ Four types, declared in frontmatter:
 
 Map only what you can see. Beyond the live waypoints lies the fog — decisions you can tell are coming but cannot yet pin down, written loosely into the **Not yet specified** of whichever map they belong to.
 
-**Fog or waypoint? The test is whether the question can be stated precisely now — not whether it can be answered now.** A sharp question that's merely blocked is a waypoint under Blocked. A dim area ("something about billing, once gating resolves") is fog. Don't pre-slice fog into waypoint-sized pieces: one patch may graduate into several waypoints, or none, once the frontier reaches it.
+**Fog or waypoint? The test is whether the question can be stated precisely now — not whether it can be answered now.** Both hold decisions with a sitting of their own (see Waypoints); a quality each sibling settles for itself is neither. A sharp question that's merely blocked is a waypoint under Blocked. A dim area ("something about billing, once gating resolves") is fog. Don't pre-slice fog into waypoint-sized pieces: one patch may graduate into several waypoints, or none, once the frontier reaches it.
 
 ## Out of scope
 
@@ -205,7 +213,7 @@ Resolving a waypoint changes the map around it. Every resolution, in order:
 1. Write `## Decision` into the waypoint — the operator's ruling, plus their reason where they gave one, per the mutability section above — and stamp `verified` with the operator's actor and the confirmation time. For a Prototype waypoint this is also when the artifact dies: delete its `.prototype/` directory and its `## Artifact` section — only the verdict survives.
 2. Move its name to **Decisions so far** in its nearest enclosing map, with a one-line gist.
 3. **Sweep the map against the new answer.** Fog this answer sharpened graduates into waypoints (and leaves Not-yet-specified). Blocked waypoints whose last blocker just closed move to Frontier. Prose anywhere the answer made stale gets fixed — in this map or any other; the bundle is mutable. Waypoints the answer invalidated are amended or deleted; waypoints it revealed as past the destination are proposed for Out of scope.
-4. Newly surfaced sharp questions become waypoints, wired into Frontier or Blocked — except questions about how the code is shaped, which go to the map's Handed off, never to a file.
+4. Newly surfaced sharp questions become waypoints, wired into Frontier or Blocked — except questions about how the code is shaped, which go to the map's Handed off, never to a file, and a quality each sibling waypoint settles for itself, which gets no node (see Waypoints).
 5. New research waypoints get `atlas:waypoint-researcher` dispatched before the session ends; new Prototype waypoints — brief written beneath the Question first — get `atlas:waypoint-prototyper` the same way.
 6. Run the lint, fix what it finds, and commit.
 
