@@ -129,8 +129,9 @@ tests:
 # clobbers tuned contracts (the architecture recipe cannot run at all without a config;
 # the default's acyclic_siblings contract is the Python analog of the no-circular rule
 # the TS module's dependency-cruiser default provides). acyclic_siblings needs
-# import-linter >=2.6; uv add is deliberately left unversioned so it installs latest on
-# a fresh project and never rewrites a project's existing pin — a project pinned below
+# import-linter >=2.6; uv add names no version so it installs latest on a fresh project,
+# and `--bounds exact` records that as an exact pin (python.md's pin posture) while leaving
+# a project's existing pin untouched (measured on uv 0.13.7) — a project pinned below
 # 2.6 gets an unknown-contract-type error from lint-imports, which names the problem.
 # root_package must name a real package, so it's resolved
 # from pyproject's [project].name the same way `deps` resolves the package dir; when
@@ -143,7 +144,7 @@ install:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "=== refactor::install (python) ==="
-    uv add --group dev vulture bandit pip-audit import-linter pytest-cov pydeps
+    uv add --group dev --bounds exact vulture bandit pip-audit import-linter pytest-cov pydeps
     name=$(uv run --no-sync python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['name'].replace('-','_'))" 2>/dev/null || true)
     if [ -e .importlinter ] || grep -q '^\[importlinter\]' setup.cfg 2>/dev/null || grep -q '^\[tool\.importlinter\]' pyproject.toml 2>/dev/null; then
       echo "import-linter config already present — leaving it untouched"
