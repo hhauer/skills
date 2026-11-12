@@ -51,7 +51,7 @@ Are the doc's claims true *right now*?
 - External URLs — note if they look stale; don't fetch unless the orchestrator asks (network is brittle).
 - "We do X" statements — does the code/config actually do X? `grep` for the implementation.
 
-A claim that can't be verified for lack of access is an ⚠️ WARNING (flag for operator), not a 🟢 SUGGESTION.
+A claim that can't be verified for lack of access is a 🟡 intermediate finding (flag for operator), not a 🟢 minor one.
 
 ### Relevancy
 
@@ -247,7 +247,7 @@ Use `rg` for literal text, `fd` for filenames, `ast-grep` for code structure. Ne
 
 ### 7. Apply ARCC checks
 
-For each doc, walk the four dimensions. Capture findings as you go with severity and a concrete recommendation. Don't soften — false positives erode trust, missed CRITICALs erode it faster.
+For each doc, walk the four dimensions. Capture findings as you go with severity and a concrete recommendation. Don't soften — false positives erode trust, missed severe findings erode it faster.
 
 ### 8. Cross-doc consistency
 
@@ -275,21 +275,21 @@ Walk this list. If any answer is no, finish before reporting:
 
 Severity is asymmetric for CLAUDE.md misplacements. **Operator-facing content in CLAUDE.md is more severe than Claude-operational content in README.md** — because CLAUDE.md is loaded into Claude's context at the start of every session, every extraneous token in it is a recurring tax, and the project doesn't get the tight, behavior-changing CLAUDE.md it should. Misplaced content in a README is wasteful only when a human reads it.
 
-- **🔴 CRITICAL**
+- **🔴 severe**
   - False claims that mislead the reader (broken commands, missing files referenced as if present, lists that don't match reality).
   - Operator-facing content in a CLAUDE.md (setup instructions, package inventories, tutorial prose, philosophy that doesn't change Claude's behavior in this repo). Each session pays this tax.
   - Irresolvable cross-doc contradictions.
-- **🟡 WARNING**
+- **🟡 intermediate**
   - Claude-operational content in a README (the inverse misplacement — less costly, still confusing for human readers).
   - Unverifiable claims (no evidence found; possibly true but can't be confirmed).
   - Intra-doc contradictions.
   - Significant clarity issues — a fresh reader of the stated audience would get stuck.
   - Stale lists / inventories.
   - Content in a project CLAUDE.md that's already inherited from a parent CLAUDE.md.
-- **🟢 SUGGESTION**
+- **🟢 minor**
   - Style inconsistencies, terminology drift.
   - Evergreen-language violations ("currently", "new", date references).
-  - Minor tightening opportunities, alternative phrasings.
+  - Small tightening opportunities, alternative phrasings.
 
 When uncertain between two severities, prefer the lower one. False positives erode trust.
 

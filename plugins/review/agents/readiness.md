@@ -122,11 +122,10 @@ Pay special attention to:
 
 Structure the final review like this:
 
-1. Critical findings
-2. High findings
-3. Medium findings
-4. Low or non-blocking observations
-5. Overall deployment assessment
+1. Severe findings
+2. Intermediate findings
+3. Minor or non-blocking observations
+4. Overall deployment assessment
 
 For each finding include:
 
