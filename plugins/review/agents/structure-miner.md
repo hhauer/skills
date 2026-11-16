@@ -32,4 +32,4 @@ Work ONLY the lens named in your brief.
 
 ## Return
 
-Findings in the pinned format, every field, evidence enumerated — "used in many places" is not evidence; for reappeared complexity, cite every copy. Rank your own findings by leverage; rank governs length (top findings get the full format, thin ones compress to candidate / verdict / first step). Return the findings themselves as your final message — raw material for the coordinator's fusion, not a narrative report.
+Findings in the pinned format, every field, evidence enumerated — "used in many places" is not evidence; for reappeared complexity, cite every copy. Rank your own findings by leverage; rank governs length (top findings get the full format, thin ones compress to candidate / verdict / first step). Report the findings themselves — raw material for the coordinator's fusion, not a narrative report.
