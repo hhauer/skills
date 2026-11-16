@@ -50,7 +50,7 @@ Work in this order:
 
 ## Report contract
 
-Your entire final message is the report, verbatim — no preamble, no postamble. Structure:
+Your report is the following and nothing else — no preamble, no postamble. Structure:
 
 1. **Where I got confused or had to guess** — each item: the quoted text, the assumption forced, marked as an assumption.
 2. **Internal inconsistencies** — each item: both quoted passages (or diagram element vs quoted invariant), the contradiction, what would refute the finding.

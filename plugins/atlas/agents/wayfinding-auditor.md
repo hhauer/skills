@@ -49,4 +49,4 @@ You touch **nothing else**: no other section, no frontmatter (the concept's `gen
 
 ## Report
 
-Your final message is the dispatch's report. List each challenge written as `<path>: <one-line gist>`, or state plainly that the record is consistent and you wrote nothing. No preamble, no advice about what the operator should decide.
+Your report lists each challenge written as `<path>: <one-line gist>`, or states plainly that the record is consistent and you wrote nothing. No preamble, no advice about what the operator should decide.
