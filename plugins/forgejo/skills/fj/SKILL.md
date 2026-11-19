@@ -13,7 +13,7 @@ transfer. It is self-documenting — `fj <command> --help` and
 
 This skill is **only** the delta: the places where `gh` muscle memory
 produces a wrong `fj` command, or where the answer costs an agent a failed
-round trip to discover. Verified against `fj v0.6.0`.
+round trip to discover. Verified against `fj v0.7.0`.
 
 ## Where `gh` instinct misleads you
 
@@ -25,17 +25,31 @@ round trip to discover. Verified against `fj v0.6.0`.
   and `create` take `-r owner/repo` (so do the `wiki`, `actions`, `release`,
   and `tag` families), but the other `issue`/`pr` subcommands (`view`,
   `edit`, `close`, `comment`, `merge`, …) take no `-r`/`--repo` at all —
-  passing it there errors (`unexpected argument`). Relying on the cwd's
-  default remote works only when its host matches the API host; otherwise
-  it errors `can't figure out what repo to access` — put the repo in the ID
-  itself as `{owner}/{repo}#N` (e.g. `fj issue view owner/name#42`). Same
-  form applies to `pr view`. One more trap: on `repo create` and
+  passing it there errors (`unexpected argument`). `-R` is narrower still on
+  `pr`: it is accepted only before the subcommand (`fj pr -R origin view 42`),
+  and `fj pr view -R origin 42` errors.
+  For those subcommands the repo comes from the cwd's git remote, or from the
+  ID itself as `{owner}/{repo}#N` (e.g. `fj issue view owner/name#42`, same
+  form for `pr view`). Three failures tell you which one you need:
+  - `no repo info specified`: the cwd has no usable remote and the ID names
+    no repo. Use the `{owner}/{repo}#N` form.
+  - `cannot find repo, no host specified`: the repo is named but no host
+    resolves. Add `-H <host>`.
+  - `unexpected status code 410 Gone` (or another HTTP error from the wrong
+    forge): the cwd is a checkout whose remote points at a different host,
+    such as GitHub, and `fj` sent the request there. Use `-H <host>` with the
+    `{owner}/{repo}#N` form, or run from the right checkout with
+    `-C`/`--cwd <dir>`, which every command accepts.
+
+  One more trap: on `repo create` and
   `org repo create`, `-r`/`--remote` means "create a **local git remote**
   with this name for the new repo" — not a repo spec.
 - **There is no `fj issue list` / `fj pr list`.** `gh`'s `list` verb is
   `search` here: `fj issue search -s all`, `fj pr search -s all`
-  (`-s`: open (default) | closed | all). `search` with no query lists
-  everything. `issue list` fails with `unrecognized subcommand 'list'`.
+  (`-s`: open (default) | closed | all). `search` with no query matches
+  everything but prints **one page of 25**, under a `Page 1 out of N pages`
+  header; pass `--all` for the full list, or `-p <N>` for a later page.
+  `issue list` fails with `unrecognized subcommand 'list'`.
   **`search` output shows NO state** — just `#N: title (by author)`,
   identical for open and closed. So `-s all` cannot tell you which are
   closed (unlike `gh issue list`'s state column). To know state, run
@@ -48,19 +62,19 @@ round trip to discover. Verified against `fj v0.6.0`.
   the host as a **positional** and rejects the flag outright
   (`error: unexpected argument '-H' found`), which is doubly easy to trip
   over because its sibling `auth add-token` does accept `-H`.
-  Needed only when `fj` can't resolve the API host — it errors
-  `can't figure out what repo to access`. A remote whose host matches an
-  instance you're logged into (`fj auth list`) resolves fine, including SSH
-  on a non-standard port; reach for `-H` when the host is outside your
-  authenticated instances.
+  Needed only when `fj` can't resolve the API host from the cwd's remote
+  (the failures are listed under repo targeting above). A remote whose host
+  matches an instance you're logged into (`fj auth list`) resolves fine,
+  including SSH on a non-standard port; reach for `-H` outside a checkout or
+  inside one that points at another host.
 - **`fj repo labels` targets a repo by positional `[REPO]`, not `-r`/`-R`.**
   The shape is `fj repo labels [REPO] <subcommand>` (e.g.
   `fj repo labels owner/name view`); it accepts neither `-r` nor `-R`
   (unlike `issue`/`pr`). Omit the positional only when the cwd's git remote
-  resolves to `owner/name` — when the remote's SSH host differs from the API
-  host, `fj` can't infer it and errors `couldn't get repo name, please
-  specify`, so pass `[REPO]` explicitly. `-H` still works (global, before
-  the subcommand).
+  resolves to `owner/name`; without one `fj` errors `no repo info
+  specified`, so pass `[REPO]` explicitly. With `[REPO]` but no resolvable
+  host it errors `cannot find repo, no host specified`, and `-H` fixes
+  that.
 - **Title is positional, not a flag.** `fj pr create "Title" ...` — there is
   no `--title`.
 - **No `--draft`.** Mark a draft PR by prefixing the title: `"WIP: Title"`.
@@ -75,7 +89,7 @@ round trip to discover. Verified against `fj v0.6.0`.
   quoted text as the new body, doubling the quote depth, and the `sed` misses
   because the line no longer starts where it did. To edit a body, rewrite it
   from your own source text; if you must round-trip, strip the `> ` prefixes
-  and the comments line first (and the directional isolates — see below).
+  and the comments line first.
 - **`edit … body` has no `--body-file` — the whole body is one positional.**
   `fj issue edit 7 body` / `fj pr edit 42 body` take the replacement text only
   as `[NEW_BODY]`, so a long body must be inlined as `"$(cat body.md)"`. That
@@ -111,16 +125,15 @@ round trip to discover. Verified against `fj v0.6.0`.
   - Optional-argument flags passed bare do the same: `release create -b`,
     `tag create -b`, `pr merge -m`, and `actions variables create` with no
     DATA argument all open the editor.
-- **fj output is not parser-safe.** Every interpolated field (usernames,
-  titles, hosts, issue numbers) is wrapped in invisible Unicode directional
-  isolates (U+2066–U+2069) in **all** fj output, and `--style minimal` does
-  not strip them — a sed/grep parser matching `<user>@<host>` silently
-  captures the isolates along with the value. Strip them before parsing:
-  `perl -CS -pe 's/[\x{2066}-\x{2069}]//g'`. Wording is also gh-divergent
-  where you'd parse it: `fj whoami` prints `currently signed into
-  <user>@<host>` — "into", one word, not gh's "signed in to" — and `whoami`
-  has no machine-readable output flag. (This pair of quirks silently breaks
-  naive owner-detection parsers.)
+- **fj output is prose with no machine-readable mode.** There is no global
+  JSON or porcelain flag, so anything you parse is display text. Wording is
+  gh-divergent where you'd parse it: `fj whoami` prints `currently signed
+  into <user>@<host>` — "into", one word, not gh's "signed in to". The
+  `issue view` header line ends in a stray `"` after the number
+  (`Title #42"`); `pr view` does not. Piped output on v0.7.0 no longer wraps
+  fields in invisible directional isolates (U+2066–U+2069) as v0.6.0 did, so
+  a parser written against the older version may be stripping characters
+  that are no longer there, which is harmless.
 - **There is no `fj api`.** `gh api` muscle memory has no equivalent here —
   when a subcommand looks missing, there is no raw-API escape hatch to fall
   back on; what the CLI exposes is all there is.
@@ -145,7 +158,7 @@ fj pr create "Title" --base main --head feature --body "..."   # --base AND --he
 fj pr create -A --base main                                    # -A/--autofill from commits
 fj pr status 42 --wait                                         # block until checks finish
 fj pr merge 42 -M squash -d -t "Title (#42)" -m "Body"         # -M method, -d deletes branch
-#   -M methods: merge | rebase | rebase-merge | squash | manual
+#   -M methods: merge | rebase | rebase-merge | squash | manual | fast-forward-only
 #   -t/-m set the merge/squash commit title and body; -m with NO argument opens the editor
 fj pr review 42 list                                           # list reviews; -c adds inline
 #   review comments, -a includes stale/dismissed reviews
@@ -179,7 +192,7 @@ fj auth list         # all instances you're logged into
 fj auth login        # opens browser (interactive — not agent-runnable)
 fj auth add-token -H <host>   # agent-runnable fallback: token as arg or via stdin
 #   Refuses to REPLACE a credential: with one already stored for that host it
-#   fails `new key:key for <host> already exists`, leaves the old one in place,
+#   prints `key for <host> already exists`, leaves the old one in place,
 #   and still exits 0 — so a switch that silently did nothing looks like it
 #   worked. Verify with `fj whoami`, and log out first to change identity.
 fj auth logout <host>         # HOST is POSITIONAL — `-H` errors here
