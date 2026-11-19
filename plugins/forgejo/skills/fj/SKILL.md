@@ -124,6 +124,17 @@ round trip to discover. Verified against `fj v0.6.0`.
 - **There is no `fj api`.** `gh api` muscle memory has no equivalent here —
   when a subcommand looks missing, there is no raw-API escape hatch to fall
   back on; what the CLI exposes is all there is.
+- **A `fj pr merge` right after another merge fails, and the failure is
+  transient.** Each merge moves the base branch, so Forgejo recomputes
+  mergeability for every other open PR against it, and until that finishes
+  it rejects a merge of any of them with HTTP 405. `fj` reports that as an
+  error pointing at the merge call (`src/prs.rs:1753:5` on v0.7.0), with
+  nothing saying "not mergeable yet", so it reads like a crash. When merging
+  several PRs in a row, wait a few seconds and re-run the same command. Call
+  it a real failure only when it still fails after a few retries: a PR the
+  earlier merge left conflicted is rejected the same way, and `fj pr view <N>`
+  shows which case you are in. (Observed on fj v0.7.0, 2026-11-18: about half
+  of ten back-to-back squash merges, every one clean on retry.)
 - **Version is `fj version`,** not `fj --version`.
 
 ## Commands that are gh-divergent enough to spell out
